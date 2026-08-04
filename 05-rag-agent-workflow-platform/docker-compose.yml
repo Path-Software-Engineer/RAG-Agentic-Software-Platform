@@ -1,0 +1,108 @@
+name: sf-05-rag-agent-workflow
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rag_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-rag_platform}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} && psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -tAc \"SELECT extname FROM pg_extension WHERE extname='vector'\" | grep -q vector"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  rag-service:
+    build:
+      context: .
+      dockerfile: ai-services/rag-agent-service/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://rag_platform:local_only_change_me@postgres:5432/rag_platform}
+      STORAGE_ROOT: /app/storage/documents
+      CHUNK_SIZE: ${CHUNK_SIZE:-520}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-80}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-deterministic}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-deterministic-hash-v1}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-128}
+      OPENAI_COMPATIBLE_BASE_URL: ${OPENAI_COMPATIBLE_BASE_URL:-}
+      OPENAI_COMPATIBLE_API_KEY: ${OPENAI_COMPATIBLE_API_KEY:-}
+      OPENAI_COMPATIBLE_MODEL: ${OPENAI_COMPATIBLE_MODEL:-}
+    ports:
+      - "58100:8100"
+    volumes:
+      - document-storage:/app/storage/documents
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/nestjs-api/Dockerfile
+    environment:
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://rag_platform:local_only_change_me@postgres:5432/rag_platform}
+      RAG_SERVICE_URL: ${RAG_SERVICE_URL:-http://rag-service:8100}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      MAX_DOCUMENT_BYTES: ${MAX_DOCUMENT_BYTES:-1048576}
+    ports:
+      - "5300:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rag-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/sveltekit-app/Dockerfile
+      args:
+        PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:5300}
+    ports:
+      - "5173:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  document-storage:

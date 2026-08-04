@@ -1,0 +1,59 @@
+05-rag-agent-workflow-platform/
+|-- ai-services/
+|   `-- rag-agent-service/
+|       |-- app/                  # FastAPI, ingestion, chunking, embeddings, retrieval
+|       |-- scripts/              # Internal OpenAPI export
+|       |-- tests/                # Python unit and service tests
+|       |-- Dockerfile
+|       |-- pyproject.toml
+|       `-- requirements.lock
+|-- backend/
+|   `-- nestjs-api/
+|       |-- src/
+|       |   |-- common/           # Errors, correlation, database, internal client
+|       |   |-- documents/        # Public document ingestion boundary
+|       |   `-- search/           # Public search and citation boundary
+|       |-- scripts/              # Public OpenAPI export
+|       |-- test/                 # Jest contract and service tests
+|       `-- Dockerfile
+|-- data/
+|   |-- raw/                      # Ignored local input boundary
+|   `-- samples/                  # Legal, synthetic demonstration corpus
+|-- database/migrations/          # Empty-database app/rag schema creation
+|-- docs/
+|   |-- sprints/
+|   |   `-- sprint-01-semantic-search/
+|   |       |-- week-01/
+|   |       |-- week-02/
+|   |       |-- week-03/
+|   |       |-- week-04/
+|   |       `-- release-notes-draft.md
+|   |-- api-contract.md
+|   |-- architecture.md
+|   |-- data-contract.md
+|   |-- decisions.md
+|   |-- project-master-plan.md
+|   |-- technical-stories.md
+|   |-- threat-model.md
+|   `-- user-stories.md
+|-- frontend/
+|   `-- sveltekit-app/
+|       |-- src/lib/              # Typed API client and reusable evidence components
+|       |-- src/routes/           # Overview, documents, search, citation detail
+|       |-- tests/                # Frontend contract tests
+|       `-- Dockerfile
+|-- packages/contracts/
+|   |-- fixtures/
+|   |-- openapi/
+|   `-- schemas/
+|-- reports/retrieval/            # Exact-search decision evidence
+|-- scripts/                      # Setup, quality gate, contracts, seed, run and stop commands
+|-- storage/documents/            # Ignored local durable document adapter target
+|-- tests/
+|   |-- contracts/
+|   `-- integration/
+|-- .env.example
+|-- docker-compose.yml
+|-- package-lock.json
+|-- package.json
+`-- README.md

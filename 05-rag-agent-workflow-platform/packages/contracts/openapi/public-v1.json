@@ -1,0 +1,514 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "ok",
+                    "service": "rag-platform-api"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "operationId": "DocumentsController_create",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "source",
+                  "file"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "source": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "DocumentsController_list",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{documentId}": {
+      "get": {
+        "operationId": "DocumentsController_detail",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{documentId}/index": {
+      "post": {
+        "operationId": "DocumentsController_index",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/search": {
+      "post": {
+        "operationId": "SearchController_search",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponseResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/citations/{citationId}": {
+      "get": {
+        "operationId": "SearchController_citation",
+        "parameters": [
+          {
+            "name": "citationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitationResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "RAG & Agent Workflow Platform API",
+    "description": "Sprint 1 public document, semantic-search and citation contract.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "DocumentResource": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "chunkCount": {
+            "type": "number"
+          },
+          "embeddingVersionId": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "deduplicated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "documentId",
+          "documentVersionId",
+          "jobId",
+          "title",
+          "source",
+          "filename",
+          "status",
+          "chunkCount",
+          "embeddingVersionId",
+          "createdAt",
+          "correlationId",
+          "deduplicated"
+        ]
+      },
+      "SearchRequestDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "example": "How should retrieved instructions be treated?"
+          },
+          "topK": {
+            "type": "object",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "topK"
+        ]
+      },
+      "SearchResultResource": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "chunkId": {
+            "type": "string"
+          },
+          "citationId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "rank",
+          "score",
+          "documentId",
+          "documentVersionId",
+          "chunkId",
+          "citationId",
+          "title",
+          "source",
+          "snippet",
+          "locator"
+        ]
+      },
+      "SearchResponseResource": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "embeddingVersionId": {
+            "type": "string"
+          },
+          "scoreSemantics": {
+            "type": "string"
+          },
+          "elapsedMs": {
+            "type": "number"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResultResource"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "topK",
+          "embeddingVersionId",
+          "scoreSemantics",
+          "elapsedMs",
+          "correlationId",
+          "results"
+        ]
+      },
+      "CitationResource": {
+        "type": "object",
+        "properties": {
+          "citationId": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "chunkId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "object"
+          },
+          "correlationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "citationId",
+          "documentId",
+          "documentVersionId",
+          "chunkId",
+          "title",
+          "source",
+          "score",
+          "snippet",
+          "content",
+          "locator",
+          "correlationId"
+        ]
+      }
+    }
+  }
+}
