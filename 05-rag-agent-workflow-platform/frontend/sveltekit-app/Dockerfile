@@ -5,7 +5,9 @@ ENV PUBLIC_API_BASE_URL=$PUBLIC_API_BASE_URL
 COPY package.json package-lock.json ./
 COPY backend/nestjs-api/package.json backend/nestjs-api/package.json
 COPY frontend/sveltekit-app/package.json frontend/sveltekit-app/package.json
-RUN npm ci --workspace @rag-platform/web --include-workspace-root
+RUN npm ci --workspace @rag-platform/web --include-workspace-root \
+    && npm install --no-save --package-lock=false --no-audit --no-fund \
+        @rolldown/binding-linux-x64-musl@1.2.2
 COPY frontend/sveltekit-app frontend/sveltekit-app
 RUN npm run build --workspace @rag-platform/web
 

@@ -21,3 +21,20 @@ test('source cards expose score meaning and a resolvable citation route', async 
   assert.match(source, /href=\{`\/citations\/\$\{result\.citationId\}`\}/);
   assert.match(source, /Resolve citation/);
 });
+
+test('evaluation dashboard uses API evidence and exposes auditable metric semantics', async () => {
+  const pageUrl = new URL('../src/routes/evaluation/+page.svelte', import.meta.url);
+  const apiUrl = new URL('../src/lib/api.ts', import.meta.url);
+  const [page, api] = await Promise.all([
+    readFile(fileURLToPath(pageUrl), 'utf8'),
+    readFile(fileURLToPath(apiUrl), 'utf8')
+  ]);
+
+  assert.match(page, /api\.createEvaluationRun/);
+  assert.match(page, /api\.labelEvaluationResult/);
+  assert.match(page, /Precision@K/);
+  assert.match(page, /Recall@K/);
+  assert.match(page, /Similarity scores rank chunks; they are not confidence or probability/);
+  assert.match(api, /\/api\/v1\/evaluations\/runs/);
+  assert.doesNotMatch(page, /mock|fixture|Math\.random/i);
+});

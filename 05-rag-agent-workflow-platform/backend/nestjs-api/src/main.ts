@@ -12,14 +12,16 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new ApiExceptionFilter());
   app.enableCors({
     origin: (process.env.CORS_ORIGINS ?? 'http://localhost:5173').split(','),
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH'],
     exposedHeaders: ['x-correlation-id'],
   });
 
   const swagger = new DocumentBuilder()
     .setTitle('RAG & Agent Workflow Platform API')
-    .setDescription('Sprint 1 public document, semantic-search and citation contract.')
-    .setVersion('0.1.0')
+    .setDescription(
+      'Sprint 2 public document, semantic-search, citation and retrieval-evaluation contract.',
+    )
+    .setVersion('0.2.0')
     .build();
   const document = SwaggerModule.createDocument(app, swagger);
   SwaggerModule.setup('api/docs', app, document);

@@ -61,7 +61,7 @@ class IngestionService:
             )
             vectors = self.embeddings.embed([chunk.content for chunk in chunks])
             version_id = self.repository.complete_ingestion(
-                request.job_id, chunks, vectors, self.embeddings
+                request.job_id, chunks, vectors, self.embeddings, normalized
             )
             return IngestionResponse(
                 job_id=request.job_id,

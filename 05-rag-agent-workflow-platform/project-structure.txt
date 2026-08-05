@@ -1,9 +1,9 @@
 05-rag-agent-workflow-platform/
 |-- ai-services/
 |   `-- rag-agent-service/
-|       |-- app/                  # FastAPI, ingestion, chunking, embeddings, retrieval
+|       |-- app/                  # FastAPI retrieval and evaluation engine
 |       |-- scripts/              # Internal OpenAPI export
-|       |-- tests/                # Python unit and service tests
+|       |-- tests/                # Semantic-search and evaluation unit tests
 |       |-- Dockerfile
 |       |-- pyproject.toml
 |       `-- requirements.lock
@@ -12,21 +12,23 @@
 |       |-- src/
 |       |   |-- common/           # Errors, correlation, database, internal client
 |       |   |-- documents/        # Public document ingestion boundary
-|       |   `-- search/           # Public search and citation boundary
+|       |   |-- search/           # Public search and citation boundary
+|       |   `-- evaluations/      # Public retrieval-evaluation boundary
 |       |-- scripts/              # Public OpenAPI export
-|       |-- test/                 # Jest contract and service tests
+|       |-- test/                 # Jest service/contract tests
 |       `-- Dockerfile
 |-- data/
 |   |-- raw/                      # Ignored local input boundary
-|   `-- samples/                  # Legal, synthetic demonstration corpus
-|-- database/migrations/          # Empty-database app/rag schema creation
+|   `-- samples/                  # Legal synthetic demonstration corpus
+|-- database/migrations/
+|   |-- 001_sprint_01_initial.sql
+|   `-- 002_sprint_02_retrieval_evaluation.sql
 |-- docs/
 |   |-- sprints/
-|   |   `-- sprint-01-semantic-search/
-|   |       |-- week-01/
-|   |       |-- week-02/
-|   |       |-- week-03/
-|   |       |-- week-04/
+|   |   |-- sprint-01-semantic-search/
+|   |   `-- sprint-02-retrieval-evaluation/
+|   |       |-- week-01/ ... week-04/
+|   |       |-- demo-script.md
 |   |       `-- release-notes-draft.md
 |   |-- api-contract.md
 |   |-- architecture.md
@@ -38,20 +40,20 @@
 |   `-- user-stories.md
 |-- frontend/
 |   `-- sveltekit-app/
-|       |-- src/lib/              # Typed API client and reusable evidence components
-|       |-- src/routes/           # Overview, documents, search, citation detail
+|       |-- src/lib/              # Typed public API client and shared components
+|       |-- src/routes/           # Overview, documents, search, citations, evaluation
 |       |-- tests/                # Frontend contract tests
 |       `-- Dockerfile
 |-- packages/contracts/
-|   |-- fixtures/
-|   |-- openapi/
-|   `-- schemas/
-|-- reports/retrieval/            # Exact-search decision evidence
-|-- scripts/                      # Setup, quality gate, contracts, seed, run and stop commands
-|-- storage/documents/            # Ignored local durable document adapter target
+|   |-- fixtures/                 # Versioned request examples
+|   |-- openapi/                  # Generated public/internal API contracts
+|   `-- schemas/                  # Error and evaluation JSON Schemas
+|-- reports/retrieval/            # Sprint 1 search and Sprint 2 evaluation evidence
+|-- scripts/                      # Setup, gate, exports, seeds, run and stop commands
+|-- storage/documents/            # Ignored local document adapter target
 |-- tests/
 |   |-- contracts/
-|   `-- integration/
+|   `-- integration/              # Semantic-search and evaluation live E2E
 |-- .env.example
 |-- docker-compose.yml
 |-- package-lock.json

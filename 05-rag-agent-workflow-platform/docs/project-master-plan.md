@@ -1,6 +1,6 @@
 # Project 05 master plan
 
-> Preserved planning baseline. Implementation status and executable instructions live in the project `README.md`; only Sprint 1 is implemented in the current working tree.
+> Preserved planning baseline. Implementation status and executable instructions live in the project `README.md`; Sprints 1 and 2 are implemented in the current working tree, while Sprint 3 remains planned.
 
 # 05-rag-agent-workflow-platform
 

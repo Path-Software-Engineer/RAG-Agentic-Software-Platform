@@ -3,6 +3,10 @@ import type {
   ApiErrorResource,
   CitationResource,
   DocumentResource,
+  EvaluationRunResource,
+  EvaluationRunSummaryResource,
+  EvaluationStrategyResource,
+  EvaluationTestCaseResource,
   SearchResponseResource
 } from './types';
 export { formatLocator, formatScore } from './formatting';
@@ -63,5 +67,39 @@ export const api = {
       body: JSON.stringify({ query, topK, documentIds, documentVersionIds })
     }),
   citation: (citationId: string) =>
-    request<CitationResource>(`/api/v1/citations/${encodeURIComponent(citationId)}`)
+    request<CitationResource>(`/api/v1/citations/${encodeURIComponent(citationId)}`),
+  evaluationStrategies: () =>
+    request<EvaluationStrategyResource[]>('/api/v1/evaluations/strategies'),
+  evaluationTestCases: () =>
+    request<EvaluationTestCaseResource[]>('/api/v1/evaluations/test-cases'),
+  createEvaluationTestCase: (query: string, relevantDocumentIds: string[], rationale: string) =>
+    request<EvaluationTestCaseResource>('/api/v1/evaluations/test-cases', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query, relevantDocumentIds, rationale })
+    }),
+  evaluationRuns: () =>
+    request<EvaluationRunSummaryResource[]>('/api/v1/evaluations/runs'),
+  evaluationRun: (runId: string) =>
+    request<EvaluationRunResource>(`/api/v1/evaluations/runs/${encodeURIComponent(runId)}`),
+  createEvaluationRun: (
+    strategyIds: string[],
+    testCaseIds: string[],
+    documentVersionIds: string[],
+    topK: number
+  ) =>
+    request<EvaluationRunResource>('/api/v1/evaluations/runs', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ strategyIds, testCaseIds, documentVersionIds, topK })
+    }),
+  labelEvaluationResult: (runId: string, resultId: string, relevant: boolean, notes?: string) =>
+    request<EvaluationRunResource>(
+      `/api/v1/evaluations/runs/${encodeURIComponent(runId)}/results/${encodeURIComponent(resultId)}/relevance`,
+      {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ relevant, notes })
+      }
+    )
 };

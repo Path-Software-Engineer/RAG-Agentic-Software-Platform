@@ -11,7 +11,9 @@ def _resolve_local_refs(document: dict[str, object]) -> None:
         if isinstance(value, dict):
             reference = value.get("$ref")
             if isinstance(reference, str):
-                assert reference.startswith("#/"), f"external reference is not allowed: {reference}"
+                assert reference.startswith("#/"), (
+                    f"external reference is not allowed: {reference}"
+                )
                 target: object = document
                 for segment in reference.removeprefix("#/").split("/"):
                     assert isinstance(target, dict) and segment in target, (
@@ -38,6 +40,21 @@ def test_contract_fixtures_are_versioned_and_bounded() -> None:
             encoding="utf-8"
         )
     )
+    evaluation_case = json.loads(
+        (
+            ROOT / "packages/contracts/fixtures/evaluation-test-case-request.json"
+        ).read_text(encoding="utf-8")
+    )
+    evaluation_run = json.loads(
+        (ROOT / "packages/contracts/fixtures/evaluation-run-request.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    relevance_label = json.loads(
+        (ROOT / "packages/contracts/fixtures/relevance-label-request.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert set(ingestion) == {
         "job_id",
         "document_id",
@@ -59,6 +76,25 @@ def test_contract_fixtures_are_versioned_and_bounded() -> None:
         "document_version_ids",
         "correlation_id",
     }
+    assert set(evaluation_case) == {"query", "relevantDocumentIds", "rationale"}
+    assert evaluation_case["relevantDocumentIds"]
+    assert set(evaluation_run) == {
+        "strategyIds",
+        "testCaseIds",
+        "documentVersionIds",
+        "topK",
+    }
+    assert len(evaluation_run["strategyIds"]) == len(set(evaluation_run["strategyIds"]))
+    assert 1 <= evaluation_run["topK"] <= 10
+    assert set(relevance_label) == {"relevant", "notes"}
+    assert isinstance(relevance_label["relevant"], bool)
+    schema = json.loads(
+        (ROOT / "packages/contracts/schemas/evaluation-run.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert schema["$schema"].endswith("2020-12/schema")
+    assert schema["additionalProperties"] is False
 
 
 def test_public_and_internal_routes_are_declared_in_source() -> None:
@@ -69,23 +105,34 @@ def test_public_and_internal_routes_are_declared_in_source() -> None:
     internal_source = (ROOT / "ai-services/rag-agent-service/app/main.py").read_text(
         encoding="utf-8"
     )
-    for route in ("api/v1/documents", "api/v1", "search", "citations/:citationId"):
+    for route in (
+        "api/v1/documents",
+        "api/v1",
+        "search",
+        "citations/:citationId",
+        "api/v1/evaluations",
+        "runs/:runId",
+        "results/:resultId/relevance",
+    ):
         assert route in public_source
     for route in (
         "/internal/v1/ingestions",
         "/internal/v1/retrieval/search",
         "/internal/v1/citations/{citation_id}",
+        "/internal/v1/evaluations/strategies",
+        "/internal/v1/evaluations/test-cases",
+        "/internal/v1/evaluations/runs",
+        "/internal/v1/evaluations/runs/{run_id}",
+        "/internal/v1/evaluations/runs/{run_id}/results/{result_id}/relevance",
     ):
         assert route in internal_source
 
 
-def test_sprint_boundary_contains_no_future_runtime_modules() -> None:
+def test_sprint_boundary_contains_no_agent_runtime_modules() -> None:
     project_paths = {path.as_posix() for path in ROOT.rglob("*")}
     forbidden_runtime_segments = (
-        "/src/evaluations/",
         "/src/agents/",
         "/src/traces/",
-        "/app/evaluation/",
         "/app/agents/",
         "/app/tools/",
         "/app/tracing/",
@@ -101,27 +148,48 @@ def test_generated_openapi_contracts_are_structurally_valid() -> None:
     contracts = ROOT / "packages/contracts/openapi"
     public = json.loads((contracts / "public-v1.json").read_text(encoding="utf-8"))
     internal = json.loads((contracts / "internal-v1.json").read_text(encoding="utf-8"))
-    assert public["info"]["version"] == "0.1.0"
-    assert internal["info"]["version"] == "0.1.0"
+    assert public["info"]["version"] == "0.2.0"
+    assert internal["info"]["version"] == "0.2.0"
     assert {
         "/api/v1/documents",
         "/api/v1/documents/{documentId}",
         "/api/v1/documents/{documentId}/index",
         "/api/v1/search",
         "/api/v1/citations/{citationId}",
+        "/api/v1/evaluations/strategies",
+        "/api/v1/evaluations/test-cases",
+        "/api/v1/evaluations/runs",
+        "/api/v1/evaluations/runs/{runId}",
+        "/api/v1/evaluations/runs/{runId}/results/{resultId}/relevance",
     }.issubset(public["paths"])
     assert {
         "/internal/v1/ingestions",
         "/internal/v1/retrieval/search",
         "/internal/v1/citations/{citation_id}",
+        "/internal/v1/evaluations/strategies",
+        "/internal/v1/evaluations/test-cases",
+        "/internal/v1/evaluations/runs",
+        "/internal/v1/evaluations/runs/{run_id}",
+        "/internal/v1/evaluations/runs/{run_id}/results/{result_id}/relevance",
     }.issubset(internal["paths"])
     _resolve_local_refs(public)
     _resolve_local_refs(internal)
 
 
+def test_local_and_container_build_bootstrap_is_reproducible() -> None:
+    setup = (ROOT / "scripts/setup.ps1").read_text(encoding="utf-8")
+    web_dockerfile = (ROOT / "frontend/sveltekit-app/Dockerfile").read_text(
+        encoding="utf-8"
+    )
+    assert setup.index("ensurepip --upgrade") < setup.index("pip --version")
+    assert '@rolldown/binding-linux-x64-musl@1.2.2' in web_dockerfile
+    assert "--package-lock=false" in web_dockerfile
+
+
 if __name__ == "__main__":
     test_contract_fixtures_are_versioned_and_bounded()
     test_public_and_internal_routes_are_declared_in_source()
-    test_sprint_boundary_contains_no_future_runtime_modules()
+    test_sprint_boundary_contains_no_agent_runtime_modules()
     test_generated_openapi_contracts_are_structurally_valid()
-    print("OK - Sprint 1 contract and boundary checks passed")
+    test_local_and_container_build_bootstrap_is_reproducible()
+    print("OK - Sprint 2 contract and boundary checks passed")

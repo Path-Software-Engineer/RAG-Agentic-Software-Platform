@@ -32,6 +32,27 @@ services:
       retries: 20
     restart: unless-stopped
 
+  migrate:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rag_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-rag_platform}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-local_only_change_me}
+    volumes:
+      - ./database/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        for migration in /migrations/*.sql; do
+          psql -h postgres -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}" \
+            -v ON_ERROR_STOP=1 -f "$${migration}"
+        done
+    restart: "no"
+
   rag-service:
     build:
       context: .
@@ -52,8 +73,8 @@ services:
     volumes:
       - document-storage:/app/storage/documents
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/healthz', timeout=2)"]
       interval: 5s

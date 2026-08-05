@@ -51,6 +51,86 @@ export interface InternalCitationResponse {
   locator: Record<string, unknown>;
 }
 
+export interface InternalEvaluationStrategy {
+  strategy_id: string;
+  label: string;
+  description: string;
+  chunk_size: number;
+  overlap: number;
+  boundary: string;
+}
+
+export interface InternalEvaluationTestCase {
+  test_case_id: string;
+  query: string;
+  relevant_document_ids: string[];
+  rationale: string;
+  created_at: string;
+}
+
+export interface InternalEvaluationHit {
+  result_id: string;
+  rank: number;
+  score: number;
+  document_id: string;
+  document_version_id: string;
+  chunk_id: string;
+  snippet: string;
+  locator: Record<string, unknown>;
+  relevant: boolean;
+  relevance_source: 'expected-set' | 'manual';
+  relevance_notes: string | null;
+}
+
+export interface InternalEvaluationRun {
+  run_id: string;
+  status: 'completed';
+  top_k: number;
+  strategy_ids: string[];
+  test_case_ids: string[];
+  document_version_ids: string[];
+  embedding_version: string;
+  score_semantics: string;
+  metric_semantics: string;
+  strategies: Array<{
+    metrics: {
+      strategy_id: string;
+      strategy_label: string;
+      query_count: number;
+      chunk_count: number;
+      precision_at_k: number;
+      recall_at_k: number;
+      hit_rate: number;
+      mean_reciprocal_rank: number;
+      error_count: number;
+    };
+    queries: Array<{
+      test_case_id: string;
+      query: string;
+      expected_document_ids: string[];
+      precision_at_k: number;
+      recall_at_k: number;
+      hit: boolean;
+      reciprocal_rank: number;
+      results: InternalEvaluationHit[];
+    }>;
+  }>;
+  created_at: string;
+  completed_at: string;
+  elapsed_ms: number;
+  correlation_id: string;
+}
+
+export interface InternalEvaluationRunSummary {
+  run_id: string;
+  top_k: number;
+  strategy_count: number;
+  query_count: number;
+  best_strategy_id: string;
+  best_recall_at_k: number;
+  created_at: string;
+}
+
 @Injectable()
 export class RagClient {
   private readonly baseUrl = process.env.RAG_SERVICE_URL ?? 'http://localhost:58100';
@@ -80,9 +160,62 @@ export class RagClient {
     );
   }
 
+  evaluationStrategies(correlationId: string): Promise<InternalEvaluationStrategy[]> {
+    return this.request('/internal/v1/evaluations/strategies', 'GET', undefined, correlationId);
+  }
+
+  evaluationTestCases(correlationId: string): Promise<InternalEvaluationTestCase[]> {
+    return this.request('/internal/v1/evaluations/test-cases', 'GET', undefined, correlationId);
+  }
+
+  createEvaluationTestCase(
+    payload: { query: string; relevant_document_ids: string[]; rationale: string },
+    correlationId: string,
+  ): Promise<InternalEvaluationTestCase> {
+    return this.request('/internal/v1/evaluations/test-cases', 'POST', payload, correlationId);
+  }
+
+  evaluationRuns(correlationId: string): Promise<InternalEvaluationRunSummary[]> {
+    return this.request('/internal/v1/evaluations/runs', 'GET', undefined, correlationId);
+  }
+
+  createEvaluationRun(
+    payload: {
+      strategy_ids: string[];
+      test_case_ids: string[];
+      document_version_ids: string[];
+      top_k: number;
+      correlation_id: string;
+    },
+  ): Promise<InternalEvaluationRun> {
+    return this.request('/internal/v1/evaluations/runs', 'POST', payload, payload.correlation_id);
+  }
+
+  evaluationRun(runId: string, correlationId: string): Promise<InternalEvaluationRun> {
+    return this.request(
+      `/internal/v1/evaluations/runs/${encodeURIComponent(runId)}`,
+      'GET',
+      undefined,
+      correlationId,
+    );
+  }
+
+  labelEvaluationResult(
+    runId: string,
+    resultId: string,
+    payload: { relevant: boolean; notes?: string; correlation_id: string },
+  ): Promise<InternalEvaluationRun> {
+    return this.request(
+      `/internal/v1/evaluations/runs/${encodeURIComponent(runId)}/results/${encodeURIComponent(resultId)}/relevance`,
+      'PATCH',
+      payload,
+      payload.correlation_id,
+    );
+  }
+
   private async request<T>(
     path: string,
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PATCH',
     body: unknown,
     correlationId: string,
   ): Promise<T> {
@@ -102,6 +235,13 @@ export class RagClient {
       if (!response.ok) {
         if (response.status === 404) {
           throw new ApplicationError('RAG_RESOURCE_NOT_FOUND', 'The requested evidence was not found.', 404);
+        }
+        if (response.status === 422) {
+          throw new ApplicationError(
+            'EVALUATION_REQUEST_INVALID',
+            'The evaluation request is incomplete or inconsistent.',
+            422,
+          );
         }
         throw new ApplicationError(
           'RAG_SERVICE_REJECTED',

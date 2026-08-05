@@ -43,8 +43,10 @@ try {
     Write-Host "[5/9] Empty-database migration"
     docker compose down --volumes --remove-orphans
     if ($LASTEXITCODE -ne 0) { throw "Previous project-local runtime could not be cleared." }
-    docker compose up -d postgres redis
+    docker compose up -d postgres redis migrate
     if ($LASTEXITCODE -ne 0) { throw "Infrastructure could not start." }
+    docker compose wait migrate
+    if ($LASTEXITCODE -ne 0) { docker compose logs migrate; throw "Database migrations failed." }
     $Healthy = $false
     for ($Attempt = 1; $Attempt -le 24; $Attempt++) {
         $States = docker compose ps --format json | ConvertFrom-Json
@@ -55,6 +57,8 @@ try {
     if (-not $Healthy) { docker compose logs postgres redis; throw "Infrastructure did not become healthy." }
     $Vector = docker compose exec -T postgres psql -U rag_platform -d rag_platform -tAc "SELECT extversion FROM pg_extension WHERE extname='vector'"
     if (-not $Vector.Trim()) { throw "pgvector migration evidence is missing." }
+    $EvaluationTables = docker compose exec -T postgres psql -U rag_platform -d rag_platform -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='rag' AND table_name IN ('document_sources','retrieval_test_cases','evaluation_runs','relevance_labels')"
+    if ($EvaluationTables.Trim() -ne "4") { throw "Sprint 2 evaluation migration evidence is incomplete." }
 
     Write-Host "[6/9] Containerized service tests"
     docker compose run --rm rag-service python -m pytest -q --cov=app --cov-report=term-missing
@@ -84,12 +88,14 @@ try {
     if (-not $Ready) { docker compose logs; throw "Integrated platform did not become healthy." }
     & $Python tests/integration/test_semantic_search_e2e.py
     if ($LASTEXITCODE -ne 0) { throw "Semantic-search E2E failed." }
+    & $Python tests/integration/test_retrieval_evaluation_e2e.py
+    if ($LASTEXITCODE -ne 0) { throw "Retrieval-evaluation E2E failed." }
     .\scripts\export-contracts.ps1
 
     Write-Host "[9/9] Git whitespace and boundary"
     git diff --check
     if ($LASTEXITCODE -ne 0) { throw "Git whitespace validation failed." }
-    Write-Host "OK - complete Sprint 1 Semantic Search quality gate passed"
+    Write-Host "OK - complete Sprint 2 Retrieval Evaluation quality gate passed"
 } finally {
     Pop-Location
 }

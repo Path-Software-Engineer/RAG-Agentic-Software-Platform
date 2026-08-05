@@ -1,0 +1,14 @@
+{
+  "strategyIds": [
+    "compact-320",
+    "balanced-520",
+    "broad-760"
+  ],
+  "testCaseIds": [
+    "00000000-0000-4000-8000-000000000702"
+  ],
+  "documentVersionIds": [
+    "00000000-0000-4000-8000-000000000703"
+  ],
+  "topK": 3
+}

@@ -8,11 +8,14 @@ CHUNKING_VERSION = "char-window-v1"
 
 
 class CharacterWindowChunker:
-    def __init__(self, size: int, overlap: int) -> None:
+    def __init__(self, size: int, overlap: int, version: str = CHUNKING_VERSION) -> None:
         if size < 120 or overlap < 0 or overlap >= size:
             raise ValueError("invalid chunking boundary")
+        if not version.strip() or len(version) > 80:
+            raise ValueError("invalid chunking version")
         self.size = size
         self.overlap = overlap
+        self.version = version
 
     def chunk(self, document_id: UUID, version_id: UUID, text: str) -> list[ChunkRecord]:
         chunks: list[ChunkRecord] = []
@@ -27,13 +30,11 @@ class CharacterWindowChunker:
                 actual_end = actual_start + len(content)
                 chunks.append(
                     ChunkRecord(
-                        id=uuid5(
-                            version_id, f"{CHUNKING_VERSION}:{index}:{actual_start}:{actual_end}"
-                        ),
+                        id=uuid5(version_id, f"{self.version}:{index}:{actual_start}:{actual_end}"),
                         document_id=document_id,
                         document_version_id=version_id,
                         chunk_index=index,
-                        chunking_version=CHUNKING_VERSION,
+                        chunking_version=self.version,
                         content=content,
                         start_offset=actual_start,
                         end_offset=actual_end,

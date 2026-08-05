@@ -58,3 +58,91 @@ export interface ApiErrorResource {
   details: Record<string, unknown>;
   correlationId: string;
 }
+
+export interface EvaluationStrategyResource {
+  strategyId: string;
+  label: string;
+  description: string;
+  chunkSize: number;
+  overlap: number;
+  boundary: string;
+}
+
+export interface EvaluationTestCaseResource {
+  testCaseId: string;
+  query: string;
+  relevantDocumentIds: string[];
+  rationale: string;
+  createdAt: string;
+}
+
+export interface EvaluationHitResource {
+  resultId: string;
+  rank: number;
+  score: number;
+  documentId: string;
+  documentVersionId: string;
+  chunkId: string;
+  title: string;
+  source: string;
+  snippet: string;
+  locator: Record<string, unknown>;
+  relevant: boolean;
+  relevanceSource: 'expected-set' | 'manual';
+  relevanceNotes: string | null;
+}
+
+export interface EvaluationQueryResource {
+  testCaseId: string;
+  query: string;
+  expectedDocumentIds: string[];
+  precisionAtK: number;
+  recallAtK: number;
+  hit: boolean;
+  reciprocalRank: number;
+  results: EvaluationHitResource[];
+}
+
+export interface StrategyMetricsResource {
+  strategyId: string;
+  strategyLabel: string;
+  queryCount: number;
+  chunkCount: number;
+  precisionAtK: number;
+  recallAtK: number;
+  hitRate: number;
+  meanReciprocalRank: number;
+  errorCount: number;
+}
+
+export interface EvaluationStrategyResultResource {
+  metrics: StrategyMetricsResource;
+  queries: EvaluationQueryResource[];
+}
+
+export interface EvaluationRunResource {
+  runId: string;
+  status: 'completed';
+  topK: number;
+  strategyIds: string[];
+  testCaseIds: string[];
+  documentVersionIds: string[];
+  embeddingVersion: string;
+  scoreSemantics: string;
+  metricSemantics: string;
+  strategies: EvaluationStrategyResultResource[];
+  createdAt: string;
+  completedAt: string;
+  elapsedMs: number;
+  correlationId: string;
+}
+
+export interface EvaluationRunSummaryResource {
+  runId: string;
+  topK: number;
+  strategyCount: number;
+  queryCount: number;
+  bestStrategyId: string;
+  bestRecallAtK: number;
+  createdAt: string;
+}

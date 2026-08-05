@@ -26,6 +26,7 @@ class RagRepository(Protocol):
         chunks: Sequence[ChunkRecord],
         vectors: Sequence[list[float]],
         provider: EmbeddingProvider,
+        source_text: str,
     ) -> UUID: ...
 
     def fail_ingestion(self, job_id: UUID, code: str, message: str) -> None: ...
@@ -97,11 +98,22 @@ class PostgresRagRepository:
         chunks: Sequence[ChunkRecord],
         vectors: Sequence[list[float]],
         provider: EmbeddingProvider,
+        source_text: str,
     ) -> UUID:
         if len(chunks) != len(vectors):
             raise ValueError("chunk and vector counts differ")
         with self.connect() as connection, connection.cursor() as cursor:
             embedding_version_id = self._embedding_version(cursor, provider)
+            if not chunks:
+                raise ValueError("ingestion produced no chunks")
+            cursor.execute(
+                """
+                INSERT INTO rag.document_sources(document_id, document_version_id, content)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (document_version_id) DO UPDATE SET content=EXCLUDED.content
+                """,
+                (chunks[0].document_id, chunks[0].document_version_id, source_text),
+            )
             for chunk, vector in zip(chunks, vectors, strict=True):
                 cursor.execute(
                     """
@@ -268,6 +280,7 @@ class InMemoryRagRepository:
         chunks: Sequence[ChunkRecord],
         vectors: Sequence[list[float]],
         provider: EmbeddingProvider,
+        source_text: str,
     ) -> UUID:
         self.chunks = list(zip(chunks, vectors, strict=True))
         current = self.receipts[job_id]

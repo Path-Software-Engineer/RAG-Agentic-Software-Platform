@@ -1,32 +1,43 @@
-# Data Contract — Semantic Search 1.0
+# Data Contract — Retrieval Platform 0.2
 
-## Canonical document
+## Canonical document and chunk
 
-- `document_id`: opaque UUID owned by `app.documents`.
-- `document_version_id`: immutable UUID for one uploaded byte sequence.
-- `content_sha256`: lowercase SHA-256 used for deduplication.
-- `media_type`: allowlisted real type (`text/plain` or `text/markdown`).
-- `byte_size`: positive and no greater than the configured boundary.
-- original content is stored outside database metadata and never returned by list endpoints.
+- document IDs are opaque UUIDs owned by `app`;
+- document-version IDs identify immutable uploaded bytes;
+- `content_sha256` supports deduplication;
+- canonical UTF-8 source text is retained in `rag.document_sources` so evaluation strategies can rechunk the exact indexed version;
+- chunks retain document/version IDs, order, offsets, locator, content, and chunking version.
 
-## Chunk
+## Embedding and score
 
-- `chunk_id`: UUIDv5 of document-version ID and chunk index.
-- `chunk_index`: zero-based order within the version.
-- `content`: canonical UTF-8 fragment.
-- `start_offset`, `end_offset`: offsets in canonical text.
-- `locator`: `{ "kind": "character_range", "start": n, "end": n }`.
-- `chunking_version`: `char-window-v1`.
+Provider, model, dimension, preprocessing version, and creation time define an embedding version. Vectors from incompatible versions are never compared in one logical query. The reference dimension is 128. Similarity is `1 - cosine_distance`, bounded to `[-1, 1]`; it is not probability, confidence, truth, or answer correctness.
 
-## Embedding version
+## Retrieval test case
 
-- provider, model, dimension, preprocessing version, and UTC creation time are mandatory;
-- an embedding is written idempotently for `(chunk_id, embedding_version_id)`;
-- vectors from different versions are never compared in one logical query;
-- Sprint 1 persists dimension 128 because the migration and provider are locked together.
+| Field | Meaning |
+|---|---|
+| `test_case_id` | Stable UUID of one judgment scenario |
+| `query` | Controlled retrieval question |
+| `relevant_document_ids` | Document-level expected evidence set |
+| `rationale` | Human-readable reason for the expected set |
+| `created_at` | UTC creation time |
 
-## Search result and citation
+The ground truth is intentionally document-level for this sprint. Passage-level graded judgments remain future work.
 
-Every result contains `document_id`, `document_version_id`, `chunk_id`, `citation_id`, rank, score, snippet, title, source, and locator. `score` is `1 - cosine_distance`, clamped to `[-1, 1]`; it is not a probability or correctness claim.
+## Evaluation strategy
 
-A citation resolves through `citation_id` to the same durable identifiers. If the referenced chunk cannot be resolved, the API must return a controlled not-found response rather than incomplete provenance.
+The built-in versioned strategies are `compact-320` (320/48), `balanced-520` (520/80), and `broad-760` (760/120). Each uses the same natural character-window boundary algorithm and embedding adapter. The ID is part of the evidence contract.
+
+## Metrics
+
+- `Precision@K`: relevant returned chunks divided by K;
+- `Recall@K`: unique expected documents retrieved divided by expected-document count;
+- `Hit Rate`: fraction of test cases with at least one relevant hit;
+- `MRR`: mean reciprocal rank of the first relevant hit;
+- `error_count`: test cases whose Recall@K is below 1.
+
+Strategy metrics are macro averages across selected test cases. Values are bounded from 0 through 1 and rounded to six decimals. They cannot be compared across different corpora, test sets, embedding versions, or cutoffs without disclosing those differences.
+
+## Evaluation run and label audit
+
+`rag.evaluation_runs` stores the complete JSON snapshot plus strategy IDs, test-case IDs, document versions, cutoff, status, timestamps, and correlation ID. A result ID is deterministic inside its run. `rag.relevance_labels` records the latest manual judgment, notes, correlation ID, and review time. A review recalculates the affected query and strategy metrics but preserves the original expected-document set.

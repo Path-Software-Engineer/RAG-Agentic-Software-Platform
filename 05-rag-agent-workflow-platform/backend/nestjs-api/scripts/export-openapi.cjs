@@ -8,8 +8,10 @@ async function main() {
   const app = await NestFactory.create(AppModule, { logger: false });
   const configuration = new DocumentBuilder()
     .setTitle('RAG & Agent Workflow Platform API')
-    .setDescription('Sprint 1 public document, semantic-search and citation contract.')
-    .setVersion('0.1.0')
+    .setDescription(
+      'Sprint 2 public document, semantic-search, citation and retrieval-evaluation contract.',
+    )
+    .setVersion('0.2.0')
     .build();
   const document = SwaggerModule.createDocument(app, configuration);
   const outputDirectory = resolve(__dirname, '../../../packages/contracts/openapi');

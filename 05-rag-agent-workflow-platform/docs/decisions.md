@@ -47,3 +47,33 @@
 **Status:** Accepted.
 
 **Decision:** Use a dark developer-workbench aesthetic with slate surfaces, green operational status, cyan provenance accents, IBM Plex Sans-compatible body typography, and monospace evidence labels. Interaction states must remain keyboard-visible and respect reduced motion.
+
+## ADR-009 — One branch per sprint
+
+**Status:** Accepted.
+
+**Decision:** Sprint 2 is isolated in `sprint/p5-s2-retrieval-evaluation`. Day-level branches are not created. Merge, release tag, and push remain separate actions requiring authorization.
+
+## ADR-010 — Document-level ground truth first
+
+**Status:** Accepted with limitation.
+
+**Decision:** Retrieval test cases identify one or more relevant documents and include a human rationale. Passage-level graded judgments are deferred until a larger corpus justifies the annotation cost.
+
+## ADR-011 — Versioned chunking comparison
+
+**Status:** Accepted.
+
+**Decision:** Compare three named natural-character-window strategies: compact 320/48, balanced 520/80, and broad 760/120. Every run freezes strategy IDs, test cases, document versions, cutoff, ranked evidence, and metric semantics. No observed leader is promoted as universally best.
+
+## ADR-012 — Macro retrieval metrics with explicit semantics
+
+**Status:** Accepted.
+
+**Decision:** Report macro Precision@K, Recall@K, Hit Rate, MRR, and incomplete-recall count. Similarity remains a ranking score rather than probability. Metrics cannot be compared across undisclosed corpus, judgment, embedding, or cutoff changes.
+
+## ADR-013 — Audited relevance review
+
+**Status:** Accepted.
+
+**Decision:** Manual result labels revise the stored run snapshot and recalculate affected metrics while preserving the original expected-document IDs. The label, notes, correlation ID, and timestamp remain in a dedicated audit table.
