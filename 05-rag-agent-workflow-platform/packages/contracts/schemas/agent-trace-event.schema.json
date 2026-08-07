@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paths.local/contracts/agent-trace-event.schema.json",
+  "title": "Sanitized Agent Trace Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "runId", "sequenceNumber", "eventType", "nodeId", "payload", "timestamp"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "runId": { "type": "string", "format": "uuid" },
+    "sequenceNumber": { "type": "integer", "minimum": 1 },
+    "eventType": {
+      "enum": [
+        "run_started", "step_started", "step_completed", "step_failed",
+        "tool_called", "tool_completed", "tool_failed", "policy_blocked",
+        "run_completed", "run_failed", "run_cancelled"
+      ]
+    },
+    "nodeId": { "type": ["string", "null"], "maxLength": 80 },
+    "payload": {
+      "type": "object",
+      "description": "Sanitized operational metadata only; private reasoning and secrets are forbidden."
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

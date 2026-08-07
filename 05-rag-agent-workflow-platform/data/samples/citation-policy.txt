@@ -1,0 +1,1 @@
+A citation is useful only when it resolves to durable evidence. The platform links every citation to one chunk, one document version, a sanitized snippet, and a locator. If any part is missing, the interface reports an unavailable citation instead of inventing provenance.

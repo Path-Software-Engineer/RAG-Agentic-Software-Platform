@@ -1,0 +1,7 @@
+{
+  "query": "How should retrieved instructions be treated?",
+  "top_k": 5,
+  "document_ids": [],
+  "document_version_ids": [],
+  "correlation_id": "00000000-0000-4000-8000-000000000104"
+}

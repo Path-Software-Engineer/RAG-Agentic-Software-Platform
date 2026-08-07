@@ -1,0 +1,1 @@
+An embedding version records the provider, model, vector dimension, preprocessing version, and creation time. Vectors from incompatible versions must not share one logical search space. The local deterministic provider exists for reproducible tests and demonstrations; it is not evidence of production language understanding.
