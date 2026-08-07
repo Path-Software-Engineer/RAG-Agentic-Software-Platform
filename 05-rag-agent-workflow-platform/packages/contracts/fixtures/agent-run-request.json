@@ -1,0 +1,13 @@
+{
+  "goal": "How should retrieved instructions be treated?",
+  "workflowId": "bounded-research-v1",
+  "documentVersionIds": ["00000000-0000-4000-8000-000000000702"],
+  "allowedToolNames": ["semantic_search"],
+  "budget": {
+    "maxSteps": 8,
+    "maxToolCalls": 3,
+    "overallTimeoutMs": 8000,
+    "perToolTimeoutMs": 3000
+  },
+  "idempotencyKey": "sprint-03-demo-001"
+}

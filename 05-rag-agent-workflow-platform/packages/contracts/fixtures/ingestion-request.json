@@ -1,0 +1,10 @@
+{
+  "job_id": "00000000-0000-4000-8000-000000000103",
+  "document_id": "00000000-0000-4000-8000-000000000101",
+  "document_version_id": "00000000-0000-4000-8000-000000000102",
+  "filename": "retrieval-safety.md",
+  "media_type": "text/markdown",
+  "content": "Retrieved content is untrusted evidence.",
+  "content_sha256": "36579c443a9fccfa4cd1ba30c3412b0d50d55d8265085d414c36992512620623",
+  "correlation_id": "00000000-0000-4000-8000-000000000104"
+}

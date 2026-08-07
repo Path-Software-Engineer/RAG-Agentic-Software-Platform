@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paths.local/contracts/agent-run.schema.json",
+  "title": "Agent Run Resource",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runId", "threadId", "workflowId", "status", "outcome", "goal", "answer",
+    "allowedToolNames", "documentVersionIds", "budget", "usage", "citations",
+    "correlationId", "createdAt", "startedAt", "completedAt", "errorCode"
+  ],
+  "properties": {
+    "runId": { "type": "string", "format": "uuid" },
+    "threadId": { "type": "string", "format": "uuid" },
+    "workflowId": { "const": "bounded-research-v1" },
+    "status": {
+      "enum": ["queued", "running", "waiting", "completed", "failed", "cancelled", "blocked"]
+    },
+    "outcome": {
+      "type": ["string", "null"],
+      "enum": ["answered", "insufficient_evidence", "policy_blocked", "budget_exhausted", "cancelled", "failed", null]
+    },
+    "goal": { "type": "string", "minLength": 3, "maxLength": 500 },
+    "answer": { "type": ["string", "null"], "maxLength": 2000 },
+    "allowedToolNames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "enum": ["semantic_search", "document_lookup", "evaluation_lookup"] }
+    },
+    "documentVersionIds": {
+      "type": "array",
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": { "type": "string", "format": "uuid" }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxSteps", "maxToolCalls", "overallTimeoutMs", "perToolTimeoutMs"],
+      "properties": {
+        "maxSteps": { "type": "integer", "minimum": 4, "maximum": 16 },
+        "maxToolCalls": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "overallTimeoutMs": { "type": "integer", "minimum": 500, "maximum": 20000 },
+        "perToolTimeoutMs": { "type": "integer", "minimum": 250, "maximum": 8000 }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steps", "toolCalls", "elapsedMs"],
+      "properties": {
+        "steps": { "type": "integer", "minimum": 0 },
+        "toolCalls": { "type": "integer", "minimum": 0 },
+        "elapsedMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["citationId", "documentId", "documentVersionId", "chunkId", "rank", "score", "snippet"],
+        "properties": {
+          "citationId": { "type": "string", "format": "uuid" },
+          "documentId": { "type": "string", "format": "uuid" },
+          "documentVersionId": { "type": "string", "format": "uuid" },
+          "chunkId": { "type": "string", "format": "uuid" },
+          "rank": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "score": { "type": "number", "minimum": -1, "maximum": 1 },
+          "snippet": { "type": "string", "maxLength": 360 }
+        }
+      }
+    },
+    "correlationId": { "type": "string", "format": "uuid" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "startedAt": { "type": ["string", "null"], "format": "date-time" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "errorCode": { "type": ["string", "null"], "maxLength": 80 }
+  }
+}

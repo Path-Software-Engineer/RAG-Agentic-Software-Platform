@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paths.local/contracts/tool-definition.schema.json",
+  "title": "Allowlisted Read-only Tool Definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "permission", "inputSchema", "timeoutMs", "maxResultBytes", "readOnly"],
+  "properties": {
+    "name": { "enum": ["semantic_search", "document_lookup", "evaluation_lookup"] },
+    "description": { "type": "string", "minLength": 10, "maxLength": 300 },
+    "permission": { "enum": ["documents:read", "evaluations:read"] },
+    "inputSchema": { "type": "object" },
+    "timeoutMs": { "type": "integer", "minimum": 250, "maximum": 8000 },
+    "maxResultBytes": { "type": "integer", "minimum": 256, "maximum": 32768 },
+    "readOnly": { "const": true }
+  }
+}

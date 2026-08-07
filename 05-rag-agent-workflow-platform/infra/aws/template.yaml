@@ -1,0 +1,368 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cost-bounded AWS serverless delivery for Software Engineer Project 05.
+
+Parameters:
+  PlatformImageUri:
+    Type: String
+    Description: Immutable ECR image URI for the combined NestJS and private FastAPI runtime.
+  DatabaseUrlParameterName:
+    Type: String
+    Default: /sf/05/rag-agent-workflow/database-url
+  MaxDocumentBytes:
+    Type: Number
+    Default: 1048576
+    MinValue: 1024
+    MaxValue: 1048576
+
+Resources:
+  WebBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: path
+          Value: software-engineer
+        - Key: plan
+          Value: "05"
+        - Key: component
+          Value: web
+
+  PlatformLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: /aws/lambda/sf-05-rag-agent-workflow-api
+      RetentionInDays: 3
+
+  PlatformExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: sf-05-rag-agent-workflow-api
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Tags:
+        - Key: path
+          Value: software-engineer
+        - Key: plan
+          Value: "05"
+        - Key: component
+          Value: api
+
+  PlatformFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: PlatformLogGroup
+    Properties:
+      FunctionName: sf-05-rag-agent-workflow-api
+      Description: NestJS public API with a private localhost FastAPI RAG engine.
+      PackageType: Image
+      Code:
+        ImageUri: !Ref PlatformImageUri
+      Architectures:
+        - x86_64
+      Role: !GetAtt PlatformExecutionRole.Arn
+      MemorySize: 1024
+      Timeout: 60
+      ReservedConcurrentExecutions: 1
+      EphemeralStorage:
+        Size: 512
+      Environment:
+        Variables:
+          NODE_ENV: production
+          PORT: "8080"
+          RAG_PORT: "8100"
+          RAG_SERVICE_URL: http://127.0.0.1:8100
+          DATABASE_URL: !Join
+            - ""
+            - - "{{resolve:ssm-secure:"
+              - !Ref DatabaseUrlParameterName
+              - "}}"
+          DATABASE_POOL_MAX: "3"
+          REDIS_URL: ""
+          STORAGE_ROOT: /tmp/sf05-documents
+          CHUNK_SIZE: "520"
+          CHUNK_OVERLAP: "80"
+          EMBEDDING_PROVIDER: deterministic
+          EMBEDDING_MODEL: deterministic-hash-v1
+          EMBEDDING_DIMENSION: "128"
+          OPENAI_COMPATIBLE_BASE_URL: ""
+          OPENAI_COMPATIBLE_API_KEY: ""
+          OPENAI_COMPATIBLE_MODEL: ""
+          CORS_ORIGINS: https://same-origin.invalid
+          MAX_DOCUMENT_BYTES: !Ref MaxDocumentBytes
+      Tags:
+        - Key: path
+          Value: software-engineer
+        - Key: plan
+          Value: "05"
+        - Key: component
+          Value: api
+
+  PlatformFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt PlatformFunction.Arn
+      AuthType: AWS_IAM
+      InvokeMode: BUFFERED
+
+  WebOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: sf-05-rag-agent-workflow-web
+        Description: Signed access from CloudFront to the private SvelteKit bucket.
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  ApiOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: sf-05-rag-agent-workflow-api
+        Description: Signed access from CloudFront to the protected Lambda Function URL.
+        OriginAccessControlOriginType: lambda
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  WebCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: sf-05-rag-agent-workflow-web
+        DefaultTTL: 3600
+        MaxTTL: 86400
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  ApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: sf-05-rag-agent-workflow-api-disabled
+        DefaultTTL: 0
+        MaxTTL: 0
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingBrotli: false
+          EnableAcceptEncodingGzip: false
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  ApiOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: sf-05-rag-agent-workflow-api
+        CookiesConfig:
+          CookieBehavior: none
+        HeadersConfig:
+          HeaderBehavior: allExcept
+          Headers:
+            - Host
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
+  SecurityHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: sf-05-rag-agent-workflow-security
+        SecurityHeadersConfig:
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
+
+  SpaRewriteFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: sf-05-rag-agent-workflow-spa-rewrite
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Rewrite SvelteKit client routes without masking API failures.
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var uri = request.uri;
+          var segments = uri.split('/');
+          var leaf = segments[segments.length - 1];
+          if (uri === '/' || leaf.indexOf('.') === -1) {
+            request.uri = '/index.html';
+          }
+          return request;
+        }
+
+  WebDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Software Engineer Project 05
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: web-s3
+            DomainName: !GetAtt WebBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt WebOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+          - Id: platform-lambda
+            DomainName: !Select [2, !Split ["/", !GetAtt PlatformFunctionUrl.FunctionUrl]]
+            OriginAccessControlId: !GetAtt ApiOriginAccessControl.Id
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              HTTPSPort: 443
+              OriginKeepaliveTimeout: 5
+              OriginReadTimeout: 60
+              OriginSSLProtocols:
+                - TLSv1.2
+        DefaultCacheBehavior:
+          TargetOriginId: web-s3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: !Ref WebCachePolicy
+          ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt SpaRewriteFunction.FunctionMetadata.FunctionARN
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: platform-lambda
+            ViewerProtocolPolicy: https-only
+            AllowedMethods:
+              - DELETE
+              - GET
+              - HEAD
+              - OPTIONS
+              - PATCH
+              - POST
+              - PUT
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachePolicyId: !Ref ApiCachePolicy
+            OriginRequestPolicyId: !Ref ApiOriginRequestPolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+          - PathPattern: /healthz
+            TargetOriginId: platform-lambda
+            ViewerProtocolPolicy: https-only
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: !Ref ApiCachePolicy
+            OriginRequestPolicyId: !Ref ApiOriginRequestPolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+      Tags:
+        - Key: path
+          Value: software-engineer
+        - Key: plan
+          Value: "05"
+        - Key: component
+          Value: edge
+
+  PlatformFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PlatformFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: cloudfront.amazonaws.com
+      FunctionUrlAuthType: AWS_IAM
+      SourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}
+
+  PlatformFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PlatformFunction
+      Action: lambda:InvokeFunction
+      Principal: cloudfront.amazonaws.com
+      InvokedViaFunctionUrl: true
+      SourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}
+
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub ${WebBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}
+
+Outputs:
+  ApplicationUrl:
+    Value: !Sub https://${WebDistribution.DomainName}
+  ApiFunctionUrl:
+    Value: !GetAtt PlatformFunctionUrl.FunctionUrl
+  WebBucketName:
+    Value: !Ref WebBucket
+  DistributionId:
+    Value: !Ref WebDistribution
+  PlatformFunctionName:
+    Value: !Ref PlatformFunction

@@ -1,0 +1,59 @@
+05-rag-agent-workflow-platform/
+|-- ai-services/rag-agent-service/
+|   |-- app/                       # Retrieval, evaluation and bounded agent runtime
+|   |-- scripts/                   # Internal OpenAPI export
+|   |-- tests/                     # Python unit and policy tests
+|   |-- Dockerfile
+|   `-- requirements.lock
+|-- backend/nestjs-api/
+|   |-- src/
+|   |   |-- documents/             # Public ingestion boundary
+|   |   |-- search/                # Search and citation boundary
+|   |   |-- evaluations/           # Retrieval evaluation boundary
+|   |   |-- agents/                # Runs, traces, SSE and security boundary
+|   |   `-- common/
+|   |-- test/
+|   `-- Dockerfile
+|-- database/migrations/
+|   |-- 001_sprint_01_initial.sql
+|   |-- 002_sprint_02_retrieval_evaluation.sql
+|   `-- 003_sprint_03_agent_trace_viewer.sql
+|-- docs/
+|   |-- sprints/sprint-01-semantic-search/
+|   |-- sprints/sprint-02-retrieval-evaluation/
+|   |-- sprints/sprint-03-agent-trace-viewer/
+|   |-- architecture.md
+|   |-- api-contract.md
+|   |-- event-contract.md
+|   |-- trace-contract.md
+|   |-- threat-model.md
+|   |-- runbook.md
+|   `-- deployment-notes.md
+|-- frontend/sveltekit-app/
+|   |-- src/lib/                   # Typed public API adapter and components
+|   |-- src/routes/agents/         # Run workspace and trace viewer
+|   |-- tests/
+|   `-- Dockerfile
+|-- infra/aws/
+|   |-- template.yaml              # CloudFront, S3 and protected Lambda
+|   |-- platform-lambda.Dockerfile # NestJS plus private FastAPI runtime
+|   |-- deploy.ps1                 # Preflight, immutable publish and smoke
+|   |-- configure-secrets.ps1      # Neon URL to SSM SecureString
+|   |-- set-api-state.ps1          # Reserved concurrency 0 or 1
+|   `-- destroy.ps1                # Explicit scoped cleanup
+|-- packages/contracts/
+|   |-- fixtures/                  # Versioned requests and security scenarios
+|   |-- openapi/                   # Generated public/internal API contracts
+|   `-- schemas/                   # Error, evaluation, agent, event and tool schemas
+|-- reports/
+|   |-- retrieval/
+|   `-- security/
+|-- scripts/                       # Setup, seeds, run, stop, export and quality gate
+|-- tests/
+|   |-- contracts/
+|   `-- integration/               # Three live cross-layer E2Es
+|-- CHANGELOG.md
+|-- docker-compose.yml
+|-- package-lock.json
+|-- package.json
+`-- README.md

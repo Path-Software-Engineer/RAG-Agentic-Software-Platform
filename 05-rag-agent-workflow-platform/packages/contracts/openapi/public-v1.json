@@ -1,0 +1,1878 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "ok",
+                    "service": "rag-platform-api"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "operationId": "DocumentsController_create",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "source",
+                  "file"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "source": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "DocumentsController_list",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{documentId}": {
+      "get": {
+        "operationId": "DocumentsController_detail",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{documentId}/index": {
+      "post": {
+        "operationId": "DocumentsController_index",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/search": {
+      "post": {
+        "operationId": "SearchController_search",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponseResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/citations/{citationId}": {
+      "get": {
+        "operationId": "SearchController_citation",
+        "parameters": [
+          {
+            "name": "citationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitationResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/evaluations/strategies": {
+      "get": {
+        "operationId": "EvaluationController_strategies",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvaluationStrategyResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      }
+    },
+    "/api/v1/evaluations/test-cases": {
+      "get": {
+        "operationId": "EvaluationController_testCases",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvaluationTestCaseResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      },
+      "post": {
+        "operationId": "EvaluationController_createTestCase",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEvaluationTestCaseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationTestCaseResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      }
+    },
+    "/api/v1/evaluations/runs": {
+      "get": {
+        "operationId": "EvaluationController_runs",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EvaluationRunSummaryResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      },
+      "post": {
+        "operationId": "EvaluationController_createRun",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEvaluationRunDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      }
+    },
+    "/api/v1/evaluations/runs/{runId}": {
+      "get": {
+        "operationId": "EvaluationController_run",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      }
+    },
+    "/api/v1/evaluations/runs/{runId}/results/{resultId}/relevance": {
+      "patch": {
+        "operationId": "EvaluationController_label",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resultId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelevanceLabelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "retrieval evaluation"
+        ]
+      }
+    },
+    "/api/v1/agents/tools": {
+      "get": {
+        "operationId": "AgentsController_tools",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolDefinitionResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs": {
+      "post": {
+        "operationId": "AgentsController_create",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRunDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      },
+      "get": {
+        "operationId": "AgentsController_list",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentRunSummaryResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}": {
+      "get": {
+        "operationId": "AgentsController_get",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/trace": {
+      "get": {
+        "operationId": "AgentsController_trace",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTraceResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/events": {
+      "get": {
+        "operationId": "AgentsController_events",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "last-event-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/cancel": {
+      "post": {
+        "operationId": "AgentsController_cancel",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/security/evaluations": {
+      "post": {
+        "operationId": "SecurityController_evaluate",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityEvaluationResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "security"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "RAG & Agent Workflow Platform API",
+    "description": "Public document, retrieval evaluation and governed Agent Workflow Trace Viewer contract.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "DocumentResource": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "chunkCount": {
+            "type": "number"
+          },
+          "embeddingVersionId": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "deduplicated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "documentId",
+          "documentVersionId",
+          "jobId",
+          "title",
+          "source",
+          "filename",
+          "status",
+          "chunkCount",
+          "embeddingVersionId",
+          "createdAt",
+          "correlationId",
+          "deduplicated"
+        ]
+      },
+      "SearchRequestDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "example": "How should retrieved instructions be treated?"
+          },
+          "topK": {
+            "type": "object",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "topK"
+        ]
+      },
+      "SearchResultResource": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "chunkId": {
+            "type": "string"
+          },
+          "citationId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "rank",
+          "score",
+          "documentId",
+          "documentVersionId",
+          "chunkId",
+          "citationId",
+          "title",
+          "source",
+          "snippet",
+          "locator"
+        ]
+      },
+      "SearchResponseResource": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "embeddingVersionId": {
+            "type": "string"
+          },
+          "scoreSemantics": {
+            "type": "string"
+          },
+          "elapsedMs": {
+            "type": "number"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResultResource"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "topK",
+          "embeddingVersionId",
+          "scoreSemantics",
+          "elapsedMs",
+          "correlationId",
+          "results"
+        ]
+      },
+      "CitationResource": {
+        "type": "object",
+        "properties": {
+          "citationId": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "chunkId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "object"
+          },
+          "correlationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "citationId",
+          "documentId",
+          "documentVersionId",
+          "chunkId",
+          "title",
+          "source",
+          "score",
+          "snippet",
+          "content",
+          "locator",
+          "correlationId"
+        ]
+      },
+      "EvaluationStrategyResource": {
+        "type": "object",
+        "properties": {
+          "strategyId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "chunkSize": {
+            "type": "number"
+          },
+          "overlap": {
+            "type": "number"
+          },
+          "boundary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategyId",
+          "label",
+          "description",
+          "chunkSize",
+          "overlap",
+          "boundary"
+        ]
+      },
+      "EvaluationTestCaseResource": {
+        "type": "object",
+        "properties": {
+          "testCaseId": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "relevantDocumentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "testCaseId",
+          "query",
+          "relevantDocumentIds",
+          "rationale",
+          "createdAt"
+        ]
+      },
+      "CreateEvaluationTestCaseDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "example": "How must retrieved instructions be treated?"
+          },
+          "relevantDocumentIds": {
+            "description": "Document-level relevance ground truth.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "example": "The safety document contains the expected policy."
+          }
+        },
+        "required": [
+          "query",
+          "relevantDocumentIds",
+          "rationale"
+        ]
+      },
+      "EvaluationRunSummaryResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "strategyCount": {
+            "type": "number"
+          },
+          "queryCount": {
+            "type": "number"
+          },
+          "bestStrategyId": {
+            "type": "string"
+          },
+          "bestRecallAtK": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "topK",
+          "strategyCount",
+          "queryCount",
+          "bestStrategyId",
+          "bestRecallAtK",
+          "createdAt"
+        ]
+      },
+      "CreateEvaluationRunDto": {
+        "type": "object",
+        "properties": {
+          "strategyIds": {
+            "example": [
+              "compact-320",
+              "balanced-520",
+              "broad-760"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "testCaseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "topK": {
+            "type": "object",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "strategyIds",
+          "topK"
+        ]
+      },
+      "StrategyMetricsResource": {
+        "type": "object",
+        "properties": {
+          "strategyId": {
+            "type": "string"
+          },
+          "strategyLabel": {
+            "type": "string"
+          },
+          "queryCount": {
+            "type": "number"
+          },
+          "chunkCount": {
+            "type": "number"
+          },
+          "precisionAtK": {
+            "type": "number"
+          },
+          "recallAtK": {
+            "type": "number"
+          },
+          "hitRate": {
+            "type": "number"
+          },
+          "meanReciprocalRank": {
+            "type": "number"
+          },
+          "errorCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "strategyId",
+          "strategyLabel",
+          "queryCount",
+          "chunkCount",
+          "precisionAtK",
+          "recallAtK",
+          "hitRate",
+          "meanReciprocalRank",
+          "errorCount"
+        ]
+      },
+      "EvaluationHitResource": {
+        "type": "object",
+        "properties": {
+          "resultId": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "documentVersionId": {
+            "type": "string"
+          },
+          "chunkId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "object"
+          },
+          "relevant": {
+            "type": "boolean"
+          },
+          "relevanceSource": {
+            "type": "string"
+          },
+          "relevanceNotes": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "resultId",
+          "rank",
+          "score",
+          "documentId",
+          "documentVersionId",
+          "chunkId",
+          "title",
+          "source",
+          "snippet",
+          "locator",
+          "relevant",
+          "relevanceSource",
+          "relevanceNotes"
+        ]
+      },
+      "EvaluationQueryResource": {
+        "type": "object",
+        "properties": {
+          "testCaseId": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "expectedDocumentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "precisionAtK": {
+            "type": "number"
+          },
+          "recallAtK": {
+            "type": "number"
+          },
+          "hit": {
+            "type": "boolean"
+          },
+          "reciprocalRank": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationHitResource"
+            }
+          }
+        },
+        "required": [
+          "testCaseId",
+          "query",
+          "expectedDocumentIds",
+          "precisionAtK",
+          "recallAtK",
+          "hit",
+          "reciprocalRank",
+          "results"
+        ]
+      },
+      "EvaluationStrategyResultResource": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/StrategyMetricsResource"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationQueryResource"
+            }
+          }
+        },
+        "required": [
+          "metrics",
+          "queries"
+        ]
+      },
+      "EvaluationRunResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "strategyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "testCaseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "embeddingVersion": {
+            "type": "string"
+          },
+          "scoreSemantics": {
+            "type": "string"
+          },
+          "metricSemantics": {
+            "type": "string"
+          },
+          "strategies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationStrategyResultResource"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string"
+          },
+          "elapsedMs": {
+            "type": "number"
+          },
+          "correlationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "status",
+          "topK",
+          "strategyIds",
+          "testCaseIds",
+          "documentVersionIds",
+          "embeddingVersion",
+          "scoreSemantics",
+          "metricSemantics",
+          "strategies",
+          "createdAt",
+          "completedAt",
+          "elapsedMs",
+          "correlationId"
+        ]
+      },
+      "RelevanceLabelDto": {
+        "type": "object",
+        "properties": {
+          "relevant": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "relevant"
+        ]
+      },
+      "ToolDefinitionResource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "inputSchema": {
+            "type": "object"
+          },
+          "timeoutMs": {
+            "type": "number"
+          },
+          "maxResultBytes": {
+            "type": "number"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "permission",
+          "inputSchema",
+          "timeoutMs",
+          "maxResultBytes",
+          "readOnly"
+        ]
+      },
+      "AgentBudgetDto": {
+        "type": "object",
+        "properties": {
+          "maxSteps": {
+            "type": "object",
+            "default": 8,
+            "minimum": 4,
+            "maximum": 16
+          },
+          "maxToolCalls": {
+            "type": "object",
+            "default": 3,
+            "minimum": 1,
+            "maximum": 6
+          },
+          "overallTimeoutMs": {
+            "type": "object",
+            "default": 8000,
+            "minimum": 500,
+            "maximum": 20000
+          },
+          "perToolTimeoutMs": {
+            "type": "object",
+            "default": 3000,
+            "minimum": 250,
+            "maximum": 8000
+          }
+        },
+        "required": [
+          "maxSteps",
+          "maxToolCalls",
+          "overallTimeoutMs",
+          "perToolTimeoutMs"
+        ]
+      },
+      "CreateAgentRunDto": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "example": "How should retrieved instructions be treated?"
+          },
+          "workflowId": {
+            "type": "object",
+            "default": "bounded-research-v1"
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedToolNames": {
+            "default": [
+              "semantic_search"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget": {
+            "$ref": "#/components/schemas/AgentBudgetDto"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "demo-run-2026-08-05-001"
+          }
+        },
+        "required": [
+          "goal",
+          "workflowId",
+          "allowedToolNames",
+          "idempotencyKey"
+        ]
+      },
+      "AgentRunResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ]
+          },
+          "outcome": {
+            "type": "object",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "object",
+            "nullable": true
+          },
+          "allowedToolNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget": {
+            "type": "object"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "runId",
+          "threadId",
+          "workflowId",
+          "status",
+          "outcome",
+          "goal",
+          "answer",
+          "allowedToolNames",
+          "documentVersionIds",
+          "budget",
+          "usage",
+          "citations",
+          "correlationId",
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "errorCode"
+        ]
+      },
+      "AgentRunSummaryResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ]
+          },
+          "outcome": {
+            "type": "object",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string"
+          },
+          "citationCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "runId",
+          "workflowId",
+          "status",
+          "outcome",
+          "goal",
+          "citationCount",
+          "createdAt",
+          "completedAt"
+        ]
+      },
+      "AgentTraceEventResource": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "sequenceNumber": {
+            "type": "number"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "nodeId": {
+            "type": "object",
+            "nullable": true
+          },
+          "payload": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "runId",
+          "sequenceNumber",
+          "eventType",
+          "nodeId",
+          "payload",
+          "timestamp"
+        ]
+      },
+      "AgentTraceResource": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/AgentRunResource"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "toolCalls": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentTraceEventResource"
+            }
+          },
+          "privateReasoningExposed": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "run",
+          "nodes",
+          "edges",
+          "steps",
+          "toolCalls",
+          "events",
+          "privateReasoningExposed"
+        ]
+      },
+      "SecurityEvaluationResource": {
+        "type": "object",
+        "properties": {
+          "evaluationId": {
+            "type": "string"
+          },
+          "policyVersion": {
+            "type": "string"
+          },
+          "scenarioCount": {
+            "type": "number"
+          },
+          "passedCount": {
+            "type": "number"
+          },
+          "blockedCount": {
+            "type": "number"
+          },
+          "failedCount": {
+            "type": "number"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluationId",
+          "policyVersion",
+          "scenarioCount",
+          "passedCount",
+          "blockedCount",
+          "failedCount",
+          "passed",
+          "scenarios",
+          "createdAt"
+        ]
+      }
+    }
+  }
+}
