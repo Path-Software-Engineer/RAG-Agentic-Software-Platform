@@ -6,6 +6,22 @@ from uuid import UUID
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from app.agent_models import (
+    AgentRunRequest,
+    AgentRunResource,
+    AgentRunSummary,
+    AgentTraceEvent,
+    AgentTraceResource,
+    SecurityEvaluationResource,
+    ToolDefinition,
+)
+from app.agents import (
+    AgentWorkflowService,
+    NullEventPublisher,
+    PostgresAgentRepository,
+    RedisStreamEventPublisher,
+    ToolRegistry,
+)
 from app.chunking import CharacterWindowChunker
 from app.config import Settings
 from app.embeddings import (
@@ -63,11 +79,25 @@ retrieval_service = RetrievalService(repository, embedding_provider)
 evaluation_service = EvaluationService(
     PostgresEvaluationRepository(settings.database_url), embedding_provider
 )
+agent_repository = PostgresAgentRepository(settings.database_url)
+event_publisher = (
+    RedisStreamEventPublisher(settings.redis_url)
+    if settings.redis_url.strip()
+    else NullEventPublisher()
+)
+agent_service = AgentWorkflowService(
+    agent_repository,
+    ToolRegistry(retrieval_service),
+    event_publisher,
+)
 
 app = FastAPI(
-    title="RAG Agent Service — Internal API",
-    version="0.2.0",
-    description="Private ingestion, exact-retrieval and retrieval-evaluation boundary.",
+    title="RAG Agent Service - Internal API",
+    version="1.0.0",
+    description=(
+        "Private ingestion, retrieval evaluation and governed agent-trace boundary. "
+        "Trace resources never expose private reasoning."
+    ),
     docs_url="/internal/docs",
     openapi_url="/internal/openapi.json",
 )
@@ -200,3 +230,92 @@ def label_evaluation_result(
     if run is None:
         raise HTTPException(status_code=404, detail="evaluation run not found")
     return run
+
+
+@app.get(
+    "/internal/v1/agents/tools",
+    response_model=list[ToolDefinition],
+    tags=["agents"],
+)
+def agent_tools() -> list[ToolDefinition]:
+    return agent_service.tools.definitions()
+
+
+@app.post(
+    "/internal/v1/agents/runs",
+    response_model=AgentRunResource,
+    tags=["agents"],
+)
+def create_agent_run(payload: AgentRunRequest) -> AgentRunResource:
+    return agent_service.run(payload)
+
+
+@app.get(
+    "/internal/v1/agents/runs",
+    response_model=list[AgentRunSummary],
+    tags=["agents"],
+)
+def agent_runs() -> list[AgentRunSummary]:
+    return agent_service.list_runs()
+
+
+@app.get(
+    "/internal/v1/agents/runs/{run_id}",
+    response_model=AgentRunResource,
+    tags=["agents"],
+)
+def agent_run(run_id: UUID) -> AgentRunResource:
+    run = agent_service.get_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="agent run not found")
+    return run
+
+
+@app.get(
+    "/internal/v1/agents/runs/{run_id}/trace",
+    response_model=AgentTraceResource,
+    tags=["agents"],
+)
+def agent_trace(run_id: UUID) -> AgentTraceResource:
+    trace = agent_service.trace(run_id)
+    if trace is None:
+        raise HTTPException(status_code=404, detail="agent run not found")
+    return trace
+
+
+@app.get(
+    "/internal/v1/agents/runs/{run_id}/events",
+    response_model=list[AgentTraceEvent],
+    tags=["agents"],
+)
+def agent_events(run_id: UUID, after_sequence: int = 0) -> list[AgentTraceEvent]:
+    if after_sequence < 0:
+        raise HTTPException(status_code=422, detail="after_sequence must be non-negative")
+    events = agent_service.events(run_id, after_sequence)
+    if events is None:
+        raise HTTPException(status_code=404, detail="agent run not found")
+    return events
+
+
+@app.post(
+    "/internal/v1/agents/runs/{run_id}/cancel",
+    response_model=AgentRunResource,
+    tags=["agents"],
+)
+def cancel_agent_run(run_id: UUID) -> AgentRunResource:
+    try:
+        run = agent_service.cancel(run_id)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if run is None:
+        raise HTTPException(status_code=404, detail="agent run not found")
+    return run
+
+
+@app.post(
+    "/internal/v1/security/evaluations",
+    response_model=SecurityEvaluationResource,
+    tags=["security"],
+)
+def security_evaluation() -> SecurityEvaluationResource:
+    return agent_service.security_evaluation()

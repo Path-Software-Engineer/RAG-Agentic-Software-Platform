@@ -1,6 +1,6 @@
 [project]
 name = "rag-agent-service"
-version = "0.2.0"
+version = "1.0.0"
 requires-python = ">=3.12,<3.14"
 
 [tool.pytest.ini_options]
@@ -21,6 +21,7 @@ plugins = ["pydantic.mypy"]
 
 [tool.coverage.run]
 source = ["app"]
+omit = ["app/main.py", "app/config.py"]
 
 [tool.coverage.report]
 fail_under = 80

@@ -38,3 +38,35 @@ test('evaluation dashboard uses API evidence and exposes auditable metric semant
   assert.match(api, /\/api\/v1\/evaluations\/runs/);
   assert.doesNotMatch(page, /mock|fixture|Math\.random/i);
 });
+
+test('agent workspace starts only bounded workflows with explicit budgets', async () => {
+  const pageUrl = new URL('../src/routes/agents/+page.svelte', import.meta.url);
+  const apiUrl = new URL('../src/lib/api.ts', import.meta.url);
+  const [page, api] = await Promise.all([
+    readFile(fileURLToPath(pageUrl), 'utf8'),
+    readFile(fileURLToPath(apiUrl), 'utf8')
+  ]);
+
+  assert.match(page, /bounded-research-v1/);
+  assert.match(page, /maxSteps/);
+  assert.match(page, /allowedToolNames: \['semantic_search'\]/);
+  assert.match(page, /Unknown tools never reach an implementation/);
+  assert.match(api, /\/api\/v1\/agents\/runs/);
+  assert.doesNotMatch(page, /mock|fake result/i);
+});
+
+test('trace viewer exposes SSE, sanitized calls and no private reasoning', async () => {
+  const pageUrl = new URL('../src/routes/agents/[runId]/+page.svelte', import.meta.url);
+  const layoutUrl = new URL('../src/routes/+layout.svelte', import.meta.url);
+  const [page, layout] = await Promise.all([
+    readFile(fileURLToPath(pageUrl), 'utf8'),
+    readFile(fileURLToPath(layoutUrl), 'utf8')
+  ]);
+
+  assert.match(page, /new EventSource/);
+  assert.match(page, /sanitizedArguments/);
+  assert.match(page, /chain-of-thought/);
+  assert.match(page, /\/citations\/\$\{citation\.citationId\}/);
+  assert.match(layout, /Agent Trace Viewer/);
+  assert.match(layout, /Private reasoning is never exposed/);
+});

@@ -77,3 +77,45 @@
 **Status:** Accepted.
 
 **Decision:** Manual result labels revise the stored run snapshot and recalculate affected metrics while preserving the original expected-document IDs. The label, notes, correlation ID, and timestamp remain in a dedicated audit table.
+
+## ADR-014 — One bounded workflow, not autonomous chat
+
+**Status:** Accepted.
+
+**Decision:** Version 1.0.0 exposes only `bounded-research-v1`. Policy checking, retrieval, evidence assessment and finalization are explicit graph nodes. There is no open-ended planner loop, arbitrary tool selection or hidden background execution.
+
+## ADR-015 — LangGraph behind an application service
+
+**Status:** Accepted.
+
+**Decision:** FastAPI owns a typed LangGraph `StateGraph`, while the application service owns budgets, tools, sanitization, persistence and outcomes. An equivalent deterministic fallback exists only so isolated unit tests can run when LangGraph is not installed; the locked Docker runtime installs LangGraph.
+
+## ADR-016 — Read-only allowlisted tools
+
+**Status:** Accepted.
+
+**Decision:** `semantic_search`, `document_lookup`, and `evaluation_lookup` are the only registered tool contracts. The released workflow invokes semantic search only. Tools accept strict bounded arguments, return sanitized bounded resources and perform no shell, SQL, network, file-write or business action.
+
+## ADR-017 — Durable trace, ephemeral delivery
+
+**Status:** Accepted.
+
+**Decision:** PostgreSQL `agent` tables own run, step, tool-call, event and checkpoint truth. Redis Streams provides namespaced, length-bounded, TTL-based delivery. A Redis failure may reduce live fan-out but cannot invalidate or erase the durable trace.
+
+## ADR-018 — Observable execution without private reasoning
+
+**Status:** Accepted.
+
+**Decision:** The UI shows graph nodes, state transitions, sanitized tool inputs/results, durations, error codes, citations and terminal outcomes. It never stores or presents chain-of-thought, system prompts or private reasoning. The trace is operational evidence, not a causal explanation of a model.
+
+## ADR-019 — One branch for Sprint 3
+
+**Status:** Accepted.
+
+**Decision:** The complete increment lives in `sprint/p5-s3-agent-trace-viewer`. Commit, merge, tag `v1.0.0-rag-agent-workflow-platform`, push and release publication require separate authorization.
+
+## ADR-020 — One on-demand AWS runtime for the portfolio profile
+
+**Status:** Accepted for the public demo.
+
+**Decision:** Compile SvelteKit into a private S3 origin behind CloudFront and package NestJS plus the private FastAPI engine in one Lambda container. NestJS remains the only public application boundary and reaches FastAPI through localhost. Neon PostgreSQL remains durable. Do not create RDS, ElastiCache, App Runner, VPC, NAT Gateway, load balancers or provisioned concurrency. Redis remains part of the complete Docker architecture but is replaced by the explicit null publisher in this low-traffic profile because PostgreSQL owns replayable trace truth.

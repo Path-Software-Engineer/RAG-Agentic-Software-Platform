@@ -146,3 +146,125 @@ export interface EvaluationRunSummaryResource {
   bestRecallAtK: number;
   createdAt: string;
 }
+
+export type AgentRunStatus =
+  | 'queued'
+  | 'running'
+  | 'waiting'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'blocked';
+
+export interface AgentRunResource {
+  runId: string;
+  threadId: string;
+  workflowId: string;
+  status: AgentRunStatus;
+  outcome: string | null;
+  goal: string;
+  answer: string | null;
+  allowedToolNames: string[];
+  documentVersionIds: string[];
+  budget: {
+    maxSteps: number;
+    maxToolCalls: number;
+    overallTimeoutMs: number;
+    perToolTimeoutMs: number;
+  };
+  usage: { steps: number; toolCalls: number; elapsedMs: number };
+  citations: Array<{
+    citationId: string;
+    documentId: string;
+    documentVersionId: string;
+    chunkId: string;
+    rank: number;
+    score: number;
+    snippet: string;
+  }>;
+  correlationId: string;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  errorCode: string | null;
+}
+
+export interface AgentRunSummaryResource {
+  runId: string;
+  workflowId: string;
+  status: AgentRunStatus;
+  outcome: string | null;
+  goal: string;
+  citationCount: number;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface AgentTraceEventResource {
+  eventId: string;
+  runId: string;
+  sequenceNumber: number;
+  eventType: string;
+  nodeId: string | null;
+  payload: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface AgentTraceResource {
+  run: AgentRunResource;
+  nodes: Array<{ nodeId: string; label: string; kind: string }>;
+  edges: Array<{ source: string; target: string; condition: string }>;
+  steps: Array<{
+    stepId: string;
+    nodeId: string;
+    sequenceNumber: number;
+    status: string;
+    startedAt: string;
+    completedAt: string | null;
+    durationMs: number | null;
+    errorCode: string | null;
+  }>;
+  toolCalls: Array<{
+    toolCallId: string;
+    stepId: string;
+    toolName: string;
+    status: string;
+    sanitizedArguments: Record<string, unknown>;
+    sanitizedResult: Record<string, unknown> | null;
+    startedAt: string;
+    completedAt: string | null;
+    durationMs: number | null;
+    errorCode: string | null;
+  }>;
+  events: AgentTraceEventResource[];
+  privateReasoningExposed: false;
+}
+
+export interface ToolDefinitionResource {
+  name: string;
+  description: string;
+  permission: string;
+  inputSchema: Record<string, unknown>;
+  timeoutMs: number;
+  maxResultBytes: number;
+  readOnly: true;
+}
+
+export interface SecurityEvaluationResource {
+  evaluationId: string;
+  policyVersion: string;
+  scenarioCount: number;
+  passedCount: number;
+  blockedCount: number;
+  failedCount: number;
+  passed: boolean;
+  scenarios: Array<{
+    scenario_id: string;
+    category: string;
+    expected: string;
+    observed: string;
+    passed: boolean;
+    policy_code: string | null;
+  }>;
+  createdAt: string;
+}

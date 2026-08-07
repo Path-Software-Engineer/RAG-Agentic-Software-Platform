@@ -7,7 +7,7 @@ export class DatabaseService implements OnModuleDestroy {
     connectionString:
       process.env.DATABASE_URL ??
       'postgresql://rag_platform:local_only_change_me@localhost:55432/rag_platform',
-    max: 8,
+    max: Number(process.env.DATABASE_POOL_MAX ?? 8),
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
   });

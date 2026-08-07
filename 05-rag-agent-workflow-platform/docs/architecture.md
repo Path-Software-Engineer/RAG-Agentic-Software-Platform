@@ -1,78 +1,102 @@
-# Architecture — Sprints 1–2
+# Architecture — Sprints 1–3
 
 ## Decision context
 
-The platform must expose traceable search and retrieval-quality evidence without coupling the browser to vector infrastructure or a paid model provider. Sprint 2 extends the established Sprint 1 boundaries; it does not introduce an agent runtime.
+The platform must make retrieval quality and bounded agent execution inspectable without coupling the browser to vectors, workflow internals, or a paid model provider. Sprint 3 extends the existing retrieval boundaries with one read-only research workflow; it does not introduce an autonomous chat agent.
 
 ## Runtime view
 
 ```text
 SvelteKit (presentation)
-  -> NestJS /api/v1 (public application boundary)
+  -> NestJS /api/v1 (public application boundary and SSE)
        -> PostgreSQL app schema
-       -> FastAPI /internal/v1 (private retrieval boundary)
+       -> FastAPI /internal/v1 (private RAG and agent boundary)
             -> PostgreSQL rag schema + pgvector
-            -> canonical source snapshots
-            -> retrieval evaluation engine
-            -> deterministic or OpenAI-compatible embedding adapter
+            -> PostgreSQL agent schema
+            -> LangGraph bounded-research-v1
+            -> allowlisted read-only tools
+            -> Redis Stream (ephemeral event fan-out)
 ```
 
-Redis remains provisioned and health-checked but is not a source of truth. Neither sprint introduces cache semantics without measured benefit.
+PostgreSQL is the durable source of truth. Redis contains a namespaced, length-bounded, one-hour event stream and is never the only copy of a run, step, call, event, or checkpoint.
 
 ## Ownership
 
 | Boundary | Owns | Must not own |
 |---|---|---|
-| SvelteKit | interactions, test-set controls, comparison views, accessible states | SQL, chunking, ranking, metric calculation |
-| NestJS | public HTTP, validation, metadata enrichment, orchestration, error mapping | embeddings, ranking, evaluation arithmetic |
-| FastAPI | normalization, chunking, embeddings, exact retrieval, citations, strategies, metrics, run snapshots | public browser policy, app metadata writes |
-| PostgreSQL `app` | documents, versions, ingestion jobs | retrieval implementation details |
-| PostgreSQL `rag` | canonical sources, chunks, vectors, citations, test cases, evaluation runs, relevance-label audit | public product workflow |
+| SvelteKit | interactions, run form, run list, graph and ordered trace presentation | SQL, retrieval, workflow routing, metric or policy calculation |
+| NestJS | public HTTP, validation, correlation, error mapping and SSE replay | embeddings, tool execution, LangGraph state or trace fabrication |
+| FastAPI | ingestion, retrieval, evaluation, policy, graph execution, tools, sanitization and trace production | browser policy, public metadata writes or private reasoning |
+| PostgreSQL `app` | documents, versions and ingestion jobs | retrieval or agent implementation details |
+| PostgreSQL `rag` | sources, chunks, vectors, citations and evaluation evidence | public workflow metadata |
+| PostgreSQL `agent` | runs, steps, tool calls, ordered events and checkpoints | transient stream delivery |
+| Redis | ephemeral `sf05:agent:runs:{run_id}:events` delivery with TTL | durable truth |
 
-NestJS never queries `rag` tables and FastAPI never mutates `app` tables. Cross-boundary work uses versioned HTTP contracts.
+Cross-boundary work uses versioned HTTP contracts. NestJS never queries `rag` or `agent` tables directly, and FastAPI never mutates `app` tables.
 
-## Retrieval-evaluation sequence
+## Bounded workflow
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant W as SvelteKit
     participant N as NestJS
-    participant R as FastAPI
+    participant A as FastAPI and LangGraph
     participant P as PostgreSQL
+    participant R as Redis
 
-    U->>W: Define query, relevant documents, rationale
-    W->>N: POST /api/v1/evaluations/test-cases
-    N->>R: Internal test-case command
-    R->>P: Persist ground truth
-    U->>W: Choose strategies, corpus versions, top K
-    W->>N: POST /api/v1/evaluations/runs
-    N->>R: Versioned experiment request
-    R->>P: Read canonical sources and test cases
-    R->>R: Chunk, embed, rank and calculate metrics
-    R->>P: Persist complete run snapshot
-    R-->>N: Internal evaluation resource
-    N->>P: Resolve public document metadata
-    N-->>W: Public comparison resource
-    U->>W: Review relevance label
-    W->>N: PATCH result relevance
-    N->>R: Audited label command
-    R->>P: Store label and revised metrics snapshot
+    U->>W: Submit bounded research goal and budgets
+    W->>N: POST /api/v1/agents/runs
+    N->>A: Versioned internal run command
+    A->>A: Policy check
+    alt blocked request
+        A->>P: Persist blocked outcome and sanitized trace
+    else allowed request
+        A->>A: Call allowlisted semantic_search
+        A->>P: Read approved corpus and persist run evidence
+    end
+    A->>R: Publish bounded ephemeral events
+    A-->>N: Terminal run resource
+    N-->>W: Sanitized public resource
+    W->>N: GET trace and SSE events
+    N->>A: Replay after Last-Event-ID
+    A-->>N: Ordered durable events
+    N-->>W: SSE until terminal event
 ```
 
-## Reproducibility boundary
+The graph has four explicit nodes: `policy_check`, `retrieve_evidence`, `assess_evidence`, and `finalize`. The visible trace describes observable execution only. It never stores or presents chain-of-thought.
 
-An evaluation run records the selected strategy IDs, test-case IDs, document versions, cutoff, correlation ID, complete ranked hits, and metric semantics. Strategy implementations are versioned by ID and deterministic chunking version. The same inputs under the same embedding version produce equivalent rankings and metrics, while run IDs and timing remain unique operational metadata.
+## Reliability and security boundaries
+
+- an idempotency key returns the same durable run rather than repeating work;
+- `max_steps`, `max_tool_calls`, overall timeout and per-tool timeout are bounded contracts;
+- tools are registered by allowlist, read-only and schema constrained;
+- retrieved text is untrusted evidence and never becomes an instruction;
+- trace payloads redact credential-shaped keys, bearer tokens, common secret canaries and email addresses;
+- large result payloads are rejected before persistence;
+- checkpoints follow every durable event, while Redis publication failure cannot invalidate the durable trace;
+- terminal SSE events close the stream and `Last-Event-ID` replays only unseen events;
+- cancellation is accepted only for a non-terminal run.
 
 ## Failure behavior
 
-- validation failures return stable public errors before an experiment starts;
-- missing test cases, corpus sources, strategies, runs, or results return controlled errors;
-- internal timeouts and availability failures do not expose infrastructure URLs;
-- incomplete recall is retained as evidence rather than hidden;
-- manual relevance changes are auditable and do not silently rewrite the original expected-document IDs;
-- logs contain identifiers and correlation IDs, never document content, secrets, or full queries.
+Validation and policy failures are explicit. Missing resources remain controlled 404 responses. A tool timeout produces a `budget_exhausted` terminal outcome; unexpected execution failures produce sanitized error codes and failed step/tool events. No exception exposes infrastructure URLs, SQL, secrets, document contents, or private reasoning.
 
-## Sprint boundary
+## Release boundary
 
-Approximate-nearest-neighbor optimization, agent graphs, tools, traces, SSE, human approval workflows, and security-evaluation suites remain outside Sprint 2. Sprint 3 has not been started.
+Sprint 3 contains one deterministic, evidence-bound workflow and three read-only tools. Multi-agent coordination, arbitrary tools, write actions, human approval execution, external LLM dependence, authentication and tenant isolation remain outside version 1.0.0. There is no Sprint 4 in this project.
+
+## AWS portfolio deployment profile
+
+```text
+CloudFront
+  -> private S3 SvelteKit origin
+  -> protected Lambda Function URL
+       -> NestJS public API :8080
+       -> FastAPI private API 127.0.0.1:8100
+       -> Neon PostgreSQL over TLS
+```
+
+The single Lambda image is a deployment unit rather than a domain merge. HTTP contracts, ownership and public/private boundaries remain unchanged. PostgreSQL persists documents, vectors, evaluations and agent traces. Redis is not provisioned in AWS because its only responsibility is transient fan-out; the public SSE endpoint can replay ordered terminal evidence from PostgreSQL.
+
+Lambda uses reserved concurrency 1 and no provisioned concurrency. CloudFront routes `/api/*` and `/healthz` to the IAM-protected function URL and serves all other client routes from private S3. Browser request bodies include an exact SHA-256 payload header required by the Lambda origin access control.

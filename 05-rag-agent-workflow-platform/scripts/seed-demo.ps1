@@ -5,21 +5,16 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "request-integrity.ps1")
 $Files = Get-ChildItem -LiteralPath (Join-Path $Root "data\samples") -File | Sort-Object Name
 
 foreach ($File in $Files) {
     $Title = [System.IO.Path]::GetFileNameWithoutExtension($File.Name).Replace("-", " ")
-    $Arguments = @(
-        "--silent", "--show-error", "--fail-with-body",
-        "--request", "POST",
-        "--form", "title=$Title",
-        "--form", "source=Controlled demo corpus",
-        "--form", "file=@$($File.FullName)",
-        "$ApiBaseUrl/api/v1/documents"
-    )
-    & curl.exe @Arguments
-    if ($LASTEXITCODE -ne 0) { throw "Demo ingestion failed for $($File.Name)." }
-    Write-Host ""
+    Invoke-HashedMultipartRequest `
+        -Uri "$ApiBaseUrl/api/v1/documents" `
+        -Title $Title `
+        -Source "Controlled demo corpus" `
+        -File $File | Out-Null
 }
 
 Write-Host "OK - controlled Sprint 1 corpus loaded."

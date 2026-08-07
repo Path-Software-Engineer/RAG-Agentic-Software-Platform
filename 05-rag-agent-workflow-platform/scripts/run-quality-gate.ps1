@@ -15,9 +15,14 @@ if (Test-Path -LiteralPath $VenvPython) {
 }
 Push-Location $Root
 try {
+    $env:BUILDX_CONFIG = Join-Path $Root ".tmp\docker-buildx"
+    New-Item -ItemType Directory -Force -Path $env:BUILDX_CONFIG | Out-Null
+
     Write-Host "[1/9] Repository and contract checks"
     & $Python tests/contracts/check_contracts.py
     if ($LASTEXITCODE -ne 0) { throw "Contract boundary check failed." }
+    & $Python tests/contracts/check_aws_deployment.py
+    if ($LASTEXITCODE -ne 0) { throw "AWS deployment boundary check failed." }
 
     Write-Host "[2/9] Python static checks and unit tests"
     $env:PYTHONPATH = (Resolve-Path "ai-services\rag-agent-service").Path
@@ -59,6 +64,8 @@ try {
     if (-not $Vector.Trim()) { throw "pgvector migration evidence is missing." }
     $EvaluationTables = docker compose exec -T postgres psql -U rag_platform -d rag_platform -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='rag' AND table_name IN ('document_sources','retrieval_test_cases','evaluation_runs','relevance_labels')"
     if ($EvaluationTables.Trim() -ne "4") { throw "Sprint 2 evaluation migration evidence is incomplete." }
+    $AgentTables = docker compose exec -T postgres psql -U rag_platform -d rag_platform -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='agent' AND table_name IN ('agent_runs','agent_steps','tool_calls','trace_events','agent_checkpoints','security_evaluations')"
+    if ($AgentTables.Trim() -ne "6") { throw "Sprint 3 agent migration evidence is incomplete." }
 
     Write-Host "[6/9] Containerized service tests"
     docker compose run --rm rag-service python -m pytest -q --cov=app --cov-report=term-missing
@@ -90,12 +97,14 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Semantic-search E2E failed." }
     & $Python tests/integration/test_retrieval_evaluation_e2e.py
     if ($LASTEXITCODE -ne 0) { throw "Retrieval-evaluation E2E failed." }
+    & $Python tests/integration/test_agent_trace_viewer_e2e.py
+    if ($LASTEXITCODE -ne 0) { throw "Agent trace viewer E2E failed." }
     .\scripts\export-contracts.ps1
 
     Write-Host "[9/9] Git whitespace and boundary"
     git diff --check
     if ($LASTEXITCODE -ne 0) { throw "Git whitespace validation failed." }
-    Write-Host "OK - complete Sprint 2 Retrieval Evaluation quality gate passed"
+    Write-Host "OK - complete Sprint 3 Agent Workflow Trace Viewer quality gate passed"
 } finally {
     Pop-Location
 }

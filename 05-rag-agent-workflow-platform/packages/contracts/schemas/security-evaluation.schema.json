@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paths.local/contracts/security-evaluation.schema.json",
+  "title": "Controlled Agent Security Evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluationId", "policyVersion", "scenarioCount", "passedCount", "blockedCount", "failedCount", "passed", "scenarios", "createdAt"],
+  "properties": {
+    "evaluationId": { "type": "string", "format": "uuid" },
+    "policyVersion": { "const": "agent-policy/1.0" },
+    "scenarioCount": { "type": "integer", "minimum": 5 },
+    "passedCount": { "type": "integer", "minimum": 0 },
+    "blockedCount": { "type": "integer", "minimum": 0 },
+    "failedCount": { "type": "integer", "minimum": 0 },
+    "passed": { "type": "boolean" },
+    "scenarios": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenarioId", "category", "expected", "observed", "passed", "policyCode"],
+        "properties": {
+          "scenarioId": { "type": "string", "pattern": "^SEC-[0-9]{3}$" },
+          "category": { "enum": ["benign", "prompt_injection", "tool_abuse", "data_exfiltration", "denial_of_wallet"] },
+          "expected": { "enum": ["allowed", "blocked"] },
+          "observed": { "enum": ["allowed", "blocked"] },
+          "passed": { "type": "boolean" },
+          "policyCode": { "type": ["string", "null"], "maxLength": 80 }
+        }
+      }
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

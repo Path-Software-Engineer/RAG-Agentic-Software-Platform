@@ -59,6 +59,7 @@ services:
       dockerfile: ai-services/rag-agent-service/Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://rag_platform:local_only_change_me@postgres:5432/rag_platform}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       STORAGE_ROOT: /app/storage/documents
       CHUNK_SIZE: ${CHUNK_SIZE:-520}
       CHUNK_OVERLAP: ${CHUNK_OVERLAP:-80}
@@ -75,6 +76,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/healthz', timeout=2)"]
       interval: 5s

@@ -1,60 +1,58 @@
 05-rag-agent-workflow-platform/
-|-- ai-services/
-|   `-- rag-agent-service/
-|       |-- app/                  # FastAPI retrieval and evaluation engine
-|       |-- scripts/              # Internal OpenAPI export
-|       |-- tests/                # Semantic-search and evaluation unit tests
-|       |-- Dockerfile
-|       |-- pyproject.toml
-|       `-- requirements.lock
-|-- backend/
-|   `-- nestjs-api/
-|       |-- src/
-|       |   |-- common/           # Errors, correlation, database, internal client
-|       |   |-- documents/        # Public document ingestion boundary
-|       |   |-- search/           # Public search and citation boundary
-|       |   `-- evaluations/      # Public retrieval-evaluation boundary
-|       |-- scripts/              # Public OpenAPI export
-|       |-- test/                 # Jest service/contract tests
-|       `-- Dockerfile
-|-- data/
-|   |-- raw/                      # Ignored local input boundary
-|   `-- samples/                  # Legal synthetic demonstration corpus
+|-- ai-services/rag-agent-service/
+|   |-- app/                       # Retrieval, evaluation and bounded agent runtime
+|   |-- scripts/                   # Internal OpenAPI export
+|   |-- tests/                     # Python unit and policy tests
+|   |-- Dockerfile
+|   `-- requirements.lock
+|-- backend/nestjs-api/
+|   |-- src/
+|   |   |-- documents/             # Public ingestion boundary
+|   |   |-- search/                # Search and citation boundary
+|   |   |-- evaluations/           # Retrieval evaluation boundary
+|   |   |-- agents/                # Runs, traces, SSE and security boundary
+|   |   `-- common/
+|   |-- test/
+|   `-- Dockerfile
 |-- database/migrations/
 |   |-- 001_sprint_01_initial.sql
-|   `-- 002_sprint_02_retrieval_evaluation.sql
+|   |-- 002_sprint_02_retrieval_evaluation.sql
+|   `-- 003_sprint_03_agent_trace_viewer.sql
 |-- docs/
-|   |-- sprints/
-|   |   |-- sprint-01-semantic-search/
-|   |   `-- sprint-02-retrieval-evaluation/
-|   |       |-- week-01/ ... week-04/
-|   |       |-- demo-script.md
-|   |       `-- release-notes-draft.md
-|   |-- api-contract.md
+|   |-- sprints/sprint-01-semantic-search/
+|   |-- sprints/sprint-02-retrieval-evaluation/
+|   |-- sprints/sprint-03-agent-trace-viewer/
 |   |-- architecture.md
-|   |-- data-contract.md
-|   |-- decisions.md
-|   |-- project-master-plan.md
-|   |-- technical-stories.md
+|   |-- api-contract.md
+|   |-- event-contract.md
+|   |-- trace-contract.md
 |   |-- threat-model.md
-|   `-- user-stories.md
-|-- frontend/
-|   `-- sveltekit-app/
-|       |-- src/lib/              # Typed public API client and shared components
-|       |-- src/routes/           # Overview, documents, search, citations, evaluation
-|       |-- tests/                # Frontend contract tests
-|       `-- Dockerfile
+|   |-- runbook.md
+|   `-- deployment-notes.md
+|-- frontend/sveltekit-app/
+|   |-- src/lib/                   # Typed public API adapter and components
+|   |-- src/routes/agents/         # Run workspace and trace viewer
+|   |-- tests/
+|   `-- Dockerfile
+|-- infra/aws/
+|   |-- template.yaml              # CloudFront, S3 and protected Lambda
+|   |-- platform-lambda.Dockerfile # NestJS plus private FastAPI runtime
+|   |-- deploy.ps1                 # Preflight, immutable publish and smoke
+|   |-- configure-secrets.ps1      # Neon URL to SSM SecureString
+|   |-- set-api-state.ps1          # Reserved concurrency 0 or 1
+|   `-- destroy.ps1                # Explicit scoped cleanup
 |-- packages/contracts/
-|   |-- fixtures/                 # Versioned request examples
-|   |-- openapi/                  # Generated public/internal API contracts
-|   `-- schemas/                  # Error and evaluation JSON Schemas
-|-- reports/retrieval/            # Sprint 1 search and Sprint 2 evaluation evidence
-|-- scripts/                      # Setup, gate, exports, seeds, run and stop commands
-|-- storage/documents/            # Ignored local document adapter target
+|   |-- fixtures/                  # Versioned requests and security scenarios
+|   |-- openapi/                   # Generated public/internal API contracts
+|   `-- schemas/                   # Error, evaluation, agent, event and tool schemas
+|-- reports/
+|   |-- retrieval/
+|   `-- security/
+|-- scripts/                       # Setup, seeds, run, stop, export and quality gate
 |-- tests/
 |   |-- contracts/
-|   `-- integration/              # Semantic-search and evaluation live E2E
-|-- .env.example
+|   `-- integration/               # Three live cross-layer E2Es
+|-- CHANGELOG.md
 |-- docker-compose.yml
 |-- package-lock.json
 |-- package.json

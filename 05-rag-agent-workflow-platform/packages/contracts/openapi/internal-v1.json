@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "RAG Agent Service \u2014 Internal API",
-    "description": "Private ingestion, exact-retrieval and retrieval-evaluation boundary.",
-    "version": "0.2.0"
+    "title": "RAG Agent Service - Internal API",
+    "description": "Private ingestion, retrieval evaluation and governed agent-trace boundary. Trace resources never expose private reasoning.",
+    "version": "1.0.0"
   },
   "paths": {
     "/healthz": {
@@ -457,10 +457,1063 @@
           }
         }
       }
+    },
+    "/internal/v1/agents/tools": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Tools",
+        "operationId": "agent_tools_internal_v1_agents_tools_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ToolDefinition"
+                  },
+                  "type": "array",
+                  "title": "Response Agent Tools Internal V1 Agents Tools Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/agents/runs": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Runs",
+        "operationId": "agent_runs_internal_v1_agents_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgentRunSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Agent Runs Internal V1 Agents Runs Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Create Agent Run",
+        "operationId": "create_agent_run_internal_v1_agents_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/agents/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Run",
+        "operationId": "agent_run_internal_v1_agents_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/agents/runs/{run_id}/trace": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Trace",
+        "operationId": "agent_trace_internal_v1_agents_runs__run_id__trace_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTraceResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/agents/runs/{run_id}/events": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Events",
+        "operationId": "agent_events_internal_v1_agents_runs__run_id__events_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "after_sequence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "After Sequence"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentTraceEvent"
+                  },
+                  "title": "Response Agent Events Internal V1 Agents Runs  Run Id  Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/agents/runs/{run_id}/cancel": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Cancel Agent Run",
+        "operationId": "cancel_agent_run_internal_v1_agents_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/security/evaluations": {
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Security Evaluation",
+        "operationId": "security_evaluation_internal_v1_security_evaluations_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityEvaluationResource"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AgentBudget": {
+        "properties": {
+          "max_steps": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 4.0,
+            "title": "Max Steps",
+            "default": 8
+          },
+          "max_tool_calls": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Max Tool Calls",
+            "default": 3
+          },
+          "overall_timeout_ms": {
+            "type": "integer",
+            "maximum": 20000.0,
+            "minimum": 500.0,
+            "title": "Overall Timeout Ms",
+            "default": 8000
+          },
+          "per_tool_timeout_ms": {
+            "type": "integer",
+            "maximum": 8000.0,
+            "minimum": 250.0,
+            "title": "Per Tool Timeout Ms",
+            "default": 3000
+          }
+        },
+        "type": "object",
+        "title": "AgentBudget"
+      },
+      "AgentCitation": {
+        "properties": {
+          "citation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Citation Id"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "document_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Version Id"
+          },
+          "chunk_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Chunk Id"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rank"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Score"
+          },
+          "snippet": {
+            "type": "string",
+            "maxLength": 360,
+            "title": "Snippet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "citation_id",
+          "document_id",
+          "document_version_id",
+          "chunk_id",
+          "rank",
+          "score",
+          "snippet"
+        ],
+        "title": "AgentCitation"
+      },
+      "AgentGraphEdge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "condition": {
+            "type": "string",
+            "title": "Condition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "condition"
+        ],
+        "title": "AgentGraphEdge"
+      },
+      "AgentGraphNode": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "policy",
+              "tool",
+              "decision",
+              "terminal"
+            ],
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "label",
+          "kind"
+        ],
+        "title": "AgentGraphNode"
+      },
+      "AgentRunRequest": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Goal"
+          },
+          "workflow_id": {
+            "type": "string",
+            "const": "bounded-research-v1",
+            "title": "Workflow Id",
+            "default": "bounded-research-v1"
+          },
+          "document_version_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Document Version Ids"
+          },
+          "allowed_tool_names": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "semantic_search",
+                "document_lookup",
+                "evaluation_lookup"
+              ]
+            },
+            "type": "array",
+            "title": "Allowed Tool Names"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/AgentBudget"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Idempotency Key"
+          },
+          "correlation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Correlation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "goal",
+          "idempotency_key",
+          "correlation_id"
+        ],
+        "title": "AgentRunRequest"
+      },
+      "AgentRunResource": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "thread_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Thread Id"
+          },
+          "workflow_id": {
+            "type": "string",
+            "title": "Workflow Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ],
+            "title": "Status"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "answered",
+                  "insufficient_evidence",
+                  "policy_blocked",
+                  "budget_exhausted",
+                  "cancelled",
+                  "failed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "goal": {
+            "type": "string",
+            "title": "Goal"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "allowed_tool_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Tool Names"
+          },
+          "document_version_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Document Version Ids"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/AgentBudget"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/AgentUsage"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/AgentCitation"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "correlation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Correlation Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "thread_id",
+          "workflow_id",
+          "status",
+          "goal",
+          "allowed_tool_names",
+          "document_version_ids",
+          "budget",
+          "usage",
+          "idempotency_key",
+          "correlation_id",
+          "created_at"
+        ],
+        "title": "AgentRunResource"
+      },
+      "AgentRunSummary": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "workflow_id": {
+            "type": "string",
+            "title": "Workflow Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ],
+            "title": "Status"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "answered",
+                  "insufficient_evidence",
+                  "policy_blocked",
+                  "budget_exhausted",
+                  "cancelled",
+                  "failed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "goal": {
+            "type": "string",
+            "title": "Goal"
+          },
+          "citation_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Citation Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "workflow_id",
+          "status",
+          "goal",
+          "citation_count",
+          "created_at"
+        ],
+        "title": "AgentRunSummary"
+      },
+      "AgentStepResource": {
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Step Id"
+          },
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "sequence_number": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Sequence Number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "blocked",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step_id",
+          "node_id",
+          "sequence_number",
+          "status",
+          "started_at"
+        ],
+        "title": "AgentStepResource"
+      },
+      "AgentToolCallResource": {
+        "properties": {
+          "tool_call_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Tool Call Id"
+          },
+          "step_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Step Id"
+          },
+          "tool_name": {
+            "type": "string",
+            "title": "Tool Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "blocked"
+            ],
+            "title": "Status"
+          },
+          "sanitized_arguments": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sanitized Arguments"
+          },
+          "sanitized_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sanitized Result"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tool_call_id",
+          "step_id",
+          "tool_name",
+          "status",
+          "sanitized_arguments",
+          "started_at"
+        ],
+        "title": "AgentToolCallResource"
+      },
+      "AgentTraceEvent": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "sequence_number": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Sequence Number"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "run_started",
+              "step_started",
+              "step_completed",
+              "step_failed",
+              "tool_called",
+              "tool_completed",
+              "tool_failed",
+              "policy_blocked",
+              "run_completed",
+              "run_failed",
+              "run_cancelled"
+            ],
+            "title": "Event Type"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "run_id",
+          "sequence_number",
+          "event_type",
+          "payload",
+          "timestamp"
+        ],
+        "title": "AgentTraceEvent"
+      },
+      "AgentTraceResource": {
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/AgentRunResource"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/AgentGraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/AgentGraphEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/AgentStepResource"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "tool_calls": {
+            "items": {
+              "$ref": "#/components/schemas/AgentToolCallResource"
+            },
+            "type": "array",
+            "title": "Tool Calls"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTraceEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "private_reasoning_exposed": {
+            "type": "boolean",
+            "const": false,
+            "title": "Private Reasoning Exposed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "run",
+          "nodes",
+          "edges",
+          "steps",
+          "tool_calls",
+          "events"
+        ],
+        "title": "AgentTraceResource"
+      },
+      "AgentUsage": {
+        "properties": {
+          "steps": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Steps",
+            "default": 0
+          },
+          "tool_calls": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tool Calls",
+            "default": 0
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Elapsed Ms",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "AgentUsage"
+      },
       "ChunkingStrategyResource": {
         "properties": {
           "strategy_id": {
@@ -1380,6 +2433,128 @@
         ],
         "title": "SearchResponse"
       },
+      "SecurityEvaluationResource": {
+        "properties": {
+          "evaluation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Evaluation Id"
+          },
+          "policy_version": {
+            "type": "string",
+            "title": "Policy Version"
+          },
+          "scenario_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Scenario Count"
+          },
+          "passed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Passed Count"
+          },
+          "blocked_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Blocked Count"
+          },
+          "failed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failed Count"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityScenarioResult"
+            },
+            "type": "array",
+            "title": "Scenarios"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evaluation_id",
+          "policy_version",
+          "scenario_count",
+          "passed_count",
+          "blocked_count",
+          "failed_count",
+          "passed",
+          "scenarios",
+          "created_at"
+        ],
+        "title": "SecurityEvaluationResource"
+      },
+      "SecurityScenarioResult": {
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "title": "Scenario Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "benign",
+              "prompt_injection",
+              "tool_abuse",
+              "data_exfiltration",
+              "denial_of_wallet"
+            ],
+            "title": "Category"
+          },
+          "expected": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "blocked"
+            ],
+            "title": "Expected"
+          },
+          "observed": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "blocked",
+              "failed"
+            ],
+            "title": "Observed"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "policy_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "category",
+          "expected",
+          "observed",
+          "passed"
+        ],
+        "title": "SecurityScenarioResult"
+      },
       "StrategyMetrics": {
         "properties": {
           "strategy_id": {
@@ -1443,6 +2618,59 @@
           "error_count"
         ],
         "title": "StrategyMetrics"
+      },
+      "ToolDefinition": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "permission": {
+            "type": "string",
+            "enum": [
+              "documents:read",
+              "evaluations:read"
+            ],
+            "title": "Permission"
+          },
+          "input_schema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input Schema"
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "maximum": 8000.0,
+            "minimum": 250.0,
+            "title": "Timeout Ms"
+          },
+          "max_result_bytes": {
+            "type": "integer",
+            "maximum": 32768.0,
+            "minimum": 256.0,
+            "title": "Max Result Bytes"
+          },
+          "read_only": {
+            "type": "boolean",
+            "const": true,
+            "title": "Read Only",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "permission",
+          "input_schema",
+          "timeout_ms",
+          "max_result_bytes"
+        ],
+        "title": "ToolDefinition"
       },
       "ValidationError": {
         "properties": {

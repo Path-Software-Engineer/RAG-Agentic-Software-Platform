@@ -1,46 +1,52 @@
-# HTTP Contract — Sprint 2
+# HTTP Contract — Platform 1.0
 
 Public base path: `/api/v1`
 
 Internal base path: `/internal/v1`
 
+Swagger UI is served at `/api/docs`; machine-readable public OpenAPI is served at `/api/openapi.json`.
+
 ## Public NestJS resources
 
 | Method | Route | Purpose |
 |---|---|---|
-| `POST` | `/documents` | Upload and index one controlled UTF-8 document idempotently |
-| `GET` | `/documents` | List document metadata and ingestion status |
-| `GET` | `/documents/{documentId}` | Resolve one document resource |
-| `POST` | `/documents/{documentId}/index` | Confirm a completed index state |
-| `POST` | `/search` | Execute bounded exact vector search |
-| `GET` | `/citations/{citationId}` | Resolve a result to durable evidence |
-| `GET` | `/evaluations/strategies` | List versioned chunking strategies |
-| `GET`, `POST` | `/evaluations/test-cases` | List or create document-level ground truth |
-| `GET`, `POST` | `/evaluations/runs` | List summaries or execute a comparison |
-| `GET` | `/evaluations/runs/{runId}` | Resolve one complete run snapshot |
-| `PATCH` | `/evaluations/runs/{runId}/results/{resultId}/relevance` | Record a manual relevance review and recalculate metrics |
+| `POST`, `GET` | `/documents` | Upload or list controlled documents |
+| `GET` | `/documents/{documentId}` | Resolve document metadata |
+| `POST` | `/documents/{documentId}/index` | Confirm idempotent index state |
+| `POST` | `/search` | Execute bounded semantic search |
+| `GET` | `/citations/{citationId}` | Resolve durable source evidence |
+| `GET` | `/evaluations/strategies` | List versioned retrieval strategies |
+| `GET`, `POST` | `/evaluations/test-cases` | List or create ground-truth cases |
+| `GET`, `POST` | `/evaluations/runs` | List or execute evaluation runs |
+| `GET` | `/evaluations/runs/{runId}` | Resolve one evaluation snapshot |
+| `PATCH` | `/evaluations/runs/{runId}/results/{resultId}/relevance` | Audit a relevance review |
+| `GET` | `/agents/tools` | List allowlisted read-only tools |
+| `GET`, `POST` | `/agents/runs` | List summaries or execute a bounded run |
+| `GET` | `/agents/runs/{runId}` | Resolve terminal status and answer |
+| `GET` | `/agents/runs/{runId}/trace` | Resolve graph, steps, calls and events |
+| `GET` | `/agents/runs/{runId}/events` | Replay sanitized events over SSE |
+| `POST` | `/agents/runs/{runId}/cancel` | Cancel only a non-terminal run |
+| `POST` | `/security/evaluations` | Run the controlled local policy suite |
 
-Swagger UI is served at `/api/docs`; machine-readable OpenAPI is served at `/api/openapi.json`.
+## Agent request rules
 
-## Internal FastAPI resources
+- `workflowId` is fixed to `bounded-research-v1`;
+- the goal contains 3–500 visible characters;
+- `documentVersionIds` contains at most 50 UUIDs;
+- tools are unique members of `semantic_search`, `document_lookup`, and `evaluation_lookup`;
+- `idempotencyKey` contains 8–120 safe characters;
+- budgets are bounded to 4–16 steps, 1–6 tool calls, 500–20,000 ms overall and 250–8,000 ms per tool;
+- public JSON uses camelCase and internal JSON uses snake_case.
 
-FastAPI mirrors the retrieval-evaluation resources beneath `/internal/v1/evaluations` using snake_case fields. It additionally owns ingestion, exact retrieval, and citation resolution. These routes are private service contracts and are not called by the browser.
+## SSE contract
 
-## Evaluation request rules
-
-- a test case contains a 2–500 character query, one or more relevant document UUIDs, and a rationale;
-- a run contains 1–5 unique strategy IDs, up to 100 test cases, up to 100 document versions, and `topK` from 1 through 10;
-- omitting test-case or document-version filters selects all available evidence;
-- every run returns complete strategy metrics and per-query ranked results;
-- a relevance review contains a boolean judgment and optional notes of at most 500 characters;
-- public JSON uses camelCase; internal JSON uses snake_case.
+`Last-Event-ID` is interpreted as the last observed positive sequence number. The server replays events strictly after that cursor, emits IDs equal to `sequenceNumber`, and closes after `run_completed`, `run_failed`, or `run_cancelled`. A heartbeat contains operational cursor data only and is not persisted as a trace event.
 
 ## Cross-cutting rules
 
-- `x-correlation-id` is accepted or generated and propagated across service boundaries;
-- timestamps are UTC ISO 8601;
+- `x-correlation-id` is accepted or generated and propagated;
+- timestamps are UTC ISO 8601 and IDs are opaque UUIDs;
 - errors use `{ code, message, details, correlationId }` with sanitized details;
-- HTTP clients have explicit timeouts;
-- contract fixtures live in `packages/contracts/fixtures/`;
-- OpenAPI 0.2.0 contracts are generated from running application metadata;
-- the Svelte client consumes public resource types through one adapter module.
+- OpenAPI 1.0.0 is generated from NestJS and FastAPI metadata;
+- JSON Schema validates run, event, tool and security artifacts;
+- the browser consumes one typed public API adapter and never calls FastAPI directly.

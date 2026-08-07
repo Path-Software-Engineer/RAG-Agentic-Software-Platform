@@ -1,4 +1,4 @@
-# Technical Stories — Sprints 1–2
+# Technical Stories — Sprints 1–3
 
 ## TS-501 — Reproducible document-to-vector pipeline
 
@@ -84,6 +84,66 @@
 
 **Related user stories:** US-504, US-505.
 
+## TS-508 — Typed bounded workflow engine
+
+**Need:** The system needs a reproducible workflow with explicit state, transitions and outcomes rather than an open-ended agent loop.
+
+**Acceptance criteria:** one versioned workflow; typed request/state/resource contracts; explicit graph nodes and edges; deterministic local provider; answered, insufficient, blocked, budget, cancellation and failure outcomes; unit tests.
+
+**Status:** Implemented in Sprint 3.
+
+**Evidence:** `agent_models.py`, `agents.py`, `test_agent_workflow.py`.
+
+**Related user stories:** US-506, US-507.
+
+## TS-509 — Governed tool and budget boundary
+
+**Need:** Agent execution must not reach arbitrary capabilities or consume unbounded work.
+
+**Acceptance criteria:** read-only allowlist; strict tool schemas; per-workflow permissions; result-size limit; step/tool/overall/per-tool budgets; idempotency; controlled cancellation; redaction before persistence.
+
+**Status:** Implemented in Sprint 3.
+
+**Evidence:** tool registry and sanitizer in `agents.py`, agent request schema, Python tests.
+
+**Related user stories:** US-506, US-508.
+
+## TS-510 — Durable ordered trace with ephemeral delivery
+
+**Need:** Runs must remain inspectable after Redis loss while still supporting live event delivery.
+
+**Acceptance criteria:** durable run/step/call/event/checkpoint tables; unique event order; PostgreSQL reconciliation; namespaced bounded Redis Stream with TTL; terminal trace reconstruction.
+
+**Status:** Implemented in Sprint 3.
+
+**Evidence:** migration `003`, Postgres repository, Redis publisher, Docker Compose.
+
+**Related user stories:** US-507.
+
+## TS-511 — Cross-layer agent API and trace viewer
+
+**Need:** The browser needs safe typed access to runs and traces without reaching FastAPI or storage directly.
+
+**Acceptance criteria:** internal and public OpenAPI 1.0.0; NestJS validation/mapping; SSE cursor replay and terminal close; `/agents` and `/agents/[runId]`; accessible states; no client-side trace fabrication.
+
+**Status:** Implemented in Sprint 3.
+
+**Evidence:** NestJS `agents` module, Svelte routes, OpenAPI, Jest/frontend/E2E tests.
+
+**Related user stories:** US-506, US-507.
+
+## TS-512 — Reproducible security regression suite
+
+**Need:** Documented safety policies need a deterministic gate that does not attack external services.
+
+**Acceptance criteria:** five versioned scenarios; expected/observed result; policy codes; canary redaction; blocked-action metric; API resource and static report; explicit non-claims.
+
+**Status:** Implemented in Sprint 3.
+
+**Evidence:** security fixture/schema, `evaluate_security_policy`, tests and security report.
+
+**Related user stories:** US-508.
+
 ## Traceability
 
 | Technical Story | User Stories | Primary evidence |
@@ -95,3 +155,8 @@
 | TS-505 | US-504, US-505 | Migration `002` and audit repository |
 | TS-506 | US-503–US-505 | NestJS/FastAPI contracts and E2E |
 | TS-507 | US-504, US-505 | Evaluation Lab and frontend tests |
+| TS-508 | US-506, US-507 | Agent contracts, migration `003`, LangGraph service |
+| TS-509 | US-506, US-508 | Tool registry, budgets and guardrails |
+| TS-510 | US-507 | PostgreSQL trace, Redis Stream and checkpoints |
+| TS-511 | US-506, US-507 | NestJS agent API, SSE and Svelte trace viewer |
+| TS-512 | US-508 | Security fixtures, tests and report |

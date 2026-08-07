@@ -1,4 +1,4 @@
-# Data Contract — Retrieval Platform 0.2
+# Data Contract — RAG and Agent Platform 1.0
 
 ## Canonical document and chunk
 
@@ -41,3 +41,19 @@ Strategy metrics are macro averages across selected test cases. Values are bound
 ## Evaluation run and label audit
 
 `rag.evaluation_runs` stores the complete JSON snapshot plus strategy IDs, test-case IDs, document versions, cutoff, status, timestamps, and correlation ID. A result ID is deterministic inside its run. `rag.relevance_labels` records the latest manual judgment, notes, correlation ID, and review time. A review recalculates the affected query and strategy metrics but preserves the original expected-document set.
+
+## Agent run
+
+`agent.agent_runs` is the durable aggregate root. It freezes workflow ID, sanitized goal, allowed tools, approved document versions, budgets, usage, idempotency key, correlation ID, terminal outcome, citations and timestamps. A repeated idempotency key resolves to the existing run.
+
+The public statuses are `queued`, `running`, `waiting`, `completed`, `failed`, `cancelled`, and `blocked`. Every finished run has one explicit outcome: `answered`, `insufficient_evidence`, `policy_blocked`, `budget_exhausted`, `cancelled`, or `failed`.
+
+## Steps, calls and events
+
+- `agent_steps` records the executed node, order, status, duration and controlled error code;
+- `tool_calls` records an allowlisted tool, sanitized arguments/result, duration and controlled error code;
+- `trace_events` uses a unique `(run_id, sequence_number)` ordering contract;
+- `agent_checkpoints` retains the latest state reference after each durable event;
+- `security_evaluations` is reserved for durable policy-suite summaries.
+
+Event payloads contain bounded observable metadata, not document bodies, secrets, PII or private reasoning. Redis mirrors events temporarily under `sf05:agent:runs:{run_id}:events`, with maximum length 500 and TTL 3,600 seconds. PostgreSQL remains authoritative.

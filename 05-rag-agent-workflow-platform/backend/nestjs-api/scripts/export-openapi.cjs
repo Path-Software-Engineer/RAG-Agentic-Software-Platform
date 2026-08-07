@@ -5,13 +5,13 @@ const { DocumentBuilder, SwaggerModule } = require('@nestjs/swagger');
 const { AppModule } = require('../dist/app.module');
 
 async function main() {
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create(AppModule, { logger: false, abortOnError: false });
   const configuration = new DocumentBuilder()
     .setTitle('RAG & Agent Workflow Platform API')
     .setDescription(
-      'Sprint 2 public document, semantic-search, citation and retrieval-evaluation contract.',
+      'Public document, retrieval evaluation and governed Agent Workflow Trace Viewer contract.',
     )
-    .setVersion('0.2.0')
+    .setVersion('1.0.0')
     .build();
   const document = SwaggerModule.createDocument(app, configuration);
   const outputDirectory = resolve(__dirname, '../../../packages/contracts/openapi');

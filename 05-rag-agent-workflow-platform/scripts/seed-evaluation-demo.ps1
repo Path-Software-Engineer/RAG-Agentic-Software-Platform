@@ -2,6 +2,7 @@
 param([string]$ApiBaseUrl = "http://localhost:5300")
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "request-integrity.ps1")
 
 $Documents = @(Invoke-RestMethod -Uri "$ApiBaseUrl/api/v1/documents" -Method Get)
 $Completed = @($Documents | Where-Object { $_.status -eq "completed" })
@@ -40,10 +41,8 @@ $SelectedCases = @()
 foreach ($Case in $Cases) {
     $Match = $Existing | Where-Object { $_.query -eq $Case.query } | Select-Object -First 1
     if (-not $Match) {
-        $Match = Invoke-RestMethod `
+        $Match = Invoke-HashedJsonRequest `
             -Uri "$ApiBaseUrl/api/v1/evaluations/test-cases" `
-            -Method Post `
-            -ContentType "application/json" `
             -Body ($Case | ConvertTo-Json -Depth 5)
     }
     $SelectedCases += $Match
@@ -56,10 +55,8 @@ $Payload = @{
     documentVersionIds = @($Completed.documentVersionId)
     topK = 3
 }
-$Run = Invoke-RestMethod `
+$Run = Invoke-HashedJsonRequest `
     -Uri "$ApiBaseUrl/api/v1/evaluations/runs" `
-    -Method Post `
-    -ContentType "application/json" `
     -Body ($Payload | ConvertTo-Json -Depth 5)
 
 Write-Host "OK - controlled Sprint 2 evaluation evidence created."

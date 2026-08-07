@@ -1,65 +1,63 @@
 # RAG & Agent Workflow Platform
 
-Project 05 of the Software Engineer path is a modular platform for trustworthy retrieval-augmented software. Sprint 1 turns controlled text documents into traceable semantic-search evidence. Sprint 2 adds a reproducible Retrieval Evaluation Dashboard that compares versioned chunking strategies against explicit document-level relevance judgments.
+Project 05 of the Software Engineer path is a modular platform for trustworthy retrieval and observable agent workflows. It turns controlled documents into resolvable search evidence, measures retrieval behavior under comparable experiments, and executes one bounded read-only workflow whose complete sanitized trace can be inspected without exposing private reasoning.
 
-The original three-sprint roadmap remains preserved in [the project master plan](docs/project-master-plan.md). This working tree implements Sprints 1 and 2 only.
+The original 84-day roadmap is preserved in [the project master plan](docs/project-master-plan.md). All three planned sprints and the cost-bounded AWS delivery profile are implemented in the current working tree; final Git release operations remain separately authorized.
 
-## Current release boundary
+## Product modules
 
-| Module | Status | Release |
+| Module | Capability | Release boundary |
 |---|---|---|
-| Semantic Search | Implemented in Sprint 1 | `v0.1.0-sprint-01-semantic-search` pending release workflow |
-| Retrieval Evaluation | Implemented; Docker-backed runtime acceptance remains pending outside the managed sandbox | `v0.2.0-sprint-02-retrieval-evaluation` pending authorization |
-| Agent Workflow Trace Viewer | Planned; not started | Sprint 3 |
-
-No agent, tool-call, streaming trace, or workflow-execution functionality is claimed by this release.
+| Semantic Search | idempotent text ingestion, versioned chunks/embeddings, exact pgvector ranking and resolvable citations | Sprint 1 |
+| Retrieval Evaluation | three versioned chunking strategies, test cases, Precision@K, Recall@K, Hit Rate, MRR and audited labels | Sprint 2 |
+| Agent Trace Viewer | bounded LangGraph workflow, read-only tools, budgets, durable traces, SSE and controlled security evidence | Sprint 3 / 1.0.0 |
 
 ## Architecture
 
 ```text
 Browser
-  -> SvelteKit web application
-  -> NestJS public API (/api/v1)
-       -> app schema in PostgreSQL
-       -> internal FastAPI RAG service (/internal/v1)
-            -> rag schema + pgvector
-            -> versioned retrieval evaluation engine
+  -> SvelteKit
+  -> NestJS public API (/api/v1) and SSE
+       -> PostgreSQL app schema
+       -> FastAPI private API (/internal/v1)
+            -> PostgreSQL rag schema + pgvector
+            -> PostgreSQL agent schema
+            -> LangGraph + allowlisted tools
+            -> Redis Streams for ephemeral events
 ```
 
-Ownership remains explicit:
+- SvelteKit presents typed server resources and never calculates retrieval metrics or traces.
+- NestJS owns the public contract, validation, correlation, error mapping and SSE replay.
+- FastAPI owns ingestion, embeddings, retrieval, evaluation, policy, graph execution, tools and sanitization.
+- PostgreSQL is durable truth; Redis is temporary delivery only.
+- the deterministic embedding provider and fixed workflow keep local development and CI independent of paid model APIs.
 
-- SvelteKit presents typed API resources and never calculates retrieval metrics.
-- NestJS owns the public contract, application metadata, orchestration, and error mapping.
-- FastAPI owns normalization, chunking, embeddings, retrieval, citations, evaluation runs, and relevance-label recalculation.
-- PostgreSQL is the durable source of truth; `app` and `rag` remain separately owned schemas.
-- the deterministic embedding provider keeps local development and CI free from external model costs.
+The AWS portfolio profile compiles SvelteKit into a private S3 origin behind CloudFront and runs NestJS plus the private FastAPI engine inside one on-demand Lambda container. Neon PostgreSQL remains the durable store. This profile preserves the public/private API boundary without App Runner, RDS, ElastiCache, NAT Gateway or provisioned concurrency. See [AWS deployment](infra/aws/README.md).
 
-See [architecture](docs/architecture.md), [API contract](docs/api-contract.md), and [data contract](docs/data-contract.md).
+See [architecture](docs/architecture.md), [HTTP contract](docs/api-contract.md), [event contract](docs/event-contract.md), [trace contract](docs/trace-contract.md), and [threat model](docs/threat-model.md).
 
-## Product flows
+## Agent workflow
 
 ```text
-Semantic Search
-.txt or .md -> validate -> normalize -> chunk -> embed -> rank -> resolve citation
-
-Retrieval Evaluation
-indexed sources + ground-truth queries
-  -> choose versioned chunking strategies
-  -> rebuild comparable evaluation chunks
-  -> rank every query at the same K
-  -> calculate macro Precision@K, Recall@K, Hit Rate and MRR
-  -> inspect errors and record manual relevance labels
+goal
+  -> policy_check
+      -> blocked -> finalize
+      -> allowed -> semantic_search -> assess_evidence -> finalize
+  -> explicit terminal outcome
+  -> durable ordered trace
+  -> reconnectable SSE
+  -> graph and timeline viewer
 ```
 
-Evaluation runs are immutable evidence snapshots apart from explicitly audited relevance reviews. Similarity is a ranking signal, not confidence or correctness.
+The released tools are `semantic_search`, `document_lookup`, and `evaluation_lookup`; only semantic search is invoked by `bounded-research-v1`. All are read-only. Step, tool, overall-time and per-tool-time budgets are explicit. Trace data is sanitized and contains no system prompt or chain-of-thought.
 
 ## Run locally
 
-Prerequisite: Docker Desktop with Linux containers.
+Prerequisite: Docker Desktop using Linux containers.
 
 ```powershell
 Set-Location "C:\JeanLoa\Path-Software-Engineer\RAG-Agentic-Software-Platform\05-rag-agent-workflow-platform"
-Copy-Item .env.example .env
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
 .\scripts\setup.ps1
 .\scripts\run-platform.ps1 -Build
 ```
@@ -67,23 +65,32 @@ Copy-Item .env.example .env
 Open:
 
 - Web: <http://localhost:5173>
-- Retrieval Evaluation: <http://localhost:5173/evaluation>
+- Agent workspace: <http://localhost:5173/agents>
 - NestJS Swagger: <http://localhost:5300/api/docs>
-- NestJS OpenAPI JSON: <http://localhost:5300/api/openapi.json>
+- Public OpenAPI JSON: <http://localhost:5300/api/openapi.json>
 - API health: <http://localhost:5300/healthz>
 
-Load the controlled corpus and evaluation evidence:
+Load the complete controlled demonstration:
 
 ```powershell
 .\scripts\seed-demo.ps1
 .\scripts\seed-evaluation-demo.ps1
+.\scripts\seed-agent-demo.ps1
 ```
 
-Stop the platform:
+Stop with `./scripts/stop-platform.ps1`. Operational details live in [the runbook](docs/runbook.md).
+
+## Deploy to AWS
+
+The public demo uses one CloudFront URL and scales API compute to zero between requests:
 
 ```powershell
-.\scripts\stop-platform.ps1
+.\infra\aws\configure-secrets.ps1 -Profile "paths" -Region "us-east-1"
+.\infra\aws\deploy.ps1 -Profile "paths" -Region "us-east-1" -PreflightOnly
+.\infra\aws\deploy.ps1 -Profile "paths" -Region "us-east-1"
 ```
+
+The secret helper accepts a Neon pooled TLS URL. AWS Budgets are alerts rather than a hard cap; Lambda, S3, CloudFront, ECR, logs and transfer must still be monitored.
 
 ## Quality gate
 
@@ -91,35 +98,35 @@ Stop the platform:
 .\scripts\run-quality-gate.ps1
 ```
 
-The gate validates contract fixtures and OpenAPI, Python typing/lint/tests, Compose configuration, an empty PostgreSQL migration through `002`, service builds, NestJS/Svelte tests, the semantic-search E2E, and the retrieval-evaluation E2E including a relevance-label audit.
+The gate validates JSON Schemas and generated OpenAPI 1.0.0, Python lint/type/tests, Compose configuration, an empty PostgreSQL migration through `003`, pgvector and Redis health, container builds, NestJS/Svelte tests, three live cross-layer E2Es, SSE replay, security policy behavior and Git whitespace.
 
-## Sprint 2 demonstration
+## Demonstration path
 
-1. Load the controlled corpus and open **Retrieval Evaluation**.
-2. Review or create test cases with explicit relevant documents and rationale.
-3. Select the compact, balanced, and broad chunking strategies under one shared cutoff.
-4. Run the controlled evaluation and compare Precision@K, Recall@K, Hit Rate, MRR, chunk counts, and errors.
-5. Expand an incomplete-recall query and inspect every retrieved fragment.
-6. Apply a manual relevance label and confirm that the run snapshot and metrics are recalculated while the original expected-document set remains visible.
-7. Read the evidence boundary before interpreting any observed leader.
+1. Use **Documents** and **Semantic Search** to inspect ranked, resolvable evidence.
+2. Use **Evaluation Lab** to compare retrieval strategies under one versioned experiment.
+3. Use **Workflow runs** to submit a bounded goal with corpus, tool and budget controls.
+4. Open the run trace to compare the declared graph with the executed path, tool call, durations and citations.
+5. Run **Security evidence** and inspect the benign and adversarial fixture dispositions.
 
 ## Sprint evidence
 
-- [Sprint 1 overview](docs/sprints/sprint-01-semantic-search/README.md)
-- [Sprint 2 overview](docs/sprints/sprint-02-retrieval-evaluation/README.md)
+- [Sprint 1 — Semantic Search](docs/sprints/sprint-01-semantic-search/README.md)
+- [Sprint 2 — Retrieval Evaluation](docs/sprints/sprint-02-retrieval-evaluation/README.md)
+- [Sprint 3 — Agent Workflow Trace Viewer](docs/sprints/sprint-03-agent-trace-viewer/README.md)
 - [User stories](docs/user-stories.md)
 - [Technical stories](docs/technical-stories.md)
-- [Decisions](docs/decisions.md)
-- [Threat model](docs/threat-model.md)
+- [Architecture decisions](docs/decisions.md)
+- [Security evaluation](reports/security/sprint-03-security-evaluation.md)
 
 ## Evidence boundary
 
-- The included corpus and test set are small, synthetic, and non-sensitive.
-- The reference implementation uses exact comparison and deterministic local embeddings.
-- Precision@K, Recall@K, Hit Rate, and MRR apply only to the selected test cases, corpus versions, strategy versions, and cutoff.
-- Manual labels are reviewer judgments, not universal relevance truth.
-- No statistical significance, external benchmark, production semantic quality, or model-generalization claim is made.
-- Authentication, tenant isolation, agents, tool execution, streaming traces, and deployment are outside this release.
+- the corpus, judgments and security scenarios are small, synthetic and non-sensitive;
+- deterministic local embeddings validate software contracts, not production semantic quality;
+- retrieval scores are ranking signals, not confidence or truth;
+- security-fixture success is regression evidence, not certification;
+- the workflow is fixed, synchronous and read-only;
+- authentication, tenant isolation, arbitrary tools, write actions and external LLM quality remain outside version 1.0.0;
+- the AWS profile is a low-traffic portfolio topology, not production readiness or a zero-cost guarantee.
 
 ## Author
 

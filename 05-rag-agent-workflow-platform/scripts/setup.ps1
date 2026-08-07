@@ -47,7 +47,7 @@ try {
 
     docker compose config --quiet
     if ($LASTEXITCODE -ne 0) { throw "Docker Compose configuration is invalid." }
-    Write-Host "OK - Sprint 2 development environment is ready."
+    Write-Host "OK - Sprint 3 development environment is ready."
 } finally {
     $env:TEMP = $PreviousTemp
     $env:TMP = $PreviousTmp

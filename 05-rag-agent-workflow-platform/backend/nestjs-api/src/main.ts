@@ -19,9 +19,9 @@ async function bootstrap(): Promise<void> {
   const swagger = new DocumentBuilder()
     .setTitle('RAG & Agent Workflow Platform API')
     .setDescription(
-      'Sprint 2 public document, semantic-search, citation and retrieval-evaluation contract.',
+      'Public document, retrieval evaluation and governed Agent Workflow Trace Viewer contract.',
     )
-    .setVersion('0.2.0')
+    .setVersion('1.0.0')
     .build();
   const document = SwaggerModule.createDocument(app, swagger);
   SwaggerModule.setup('api/docs', app, document);

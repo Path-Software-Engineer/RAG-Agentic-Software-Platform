@@ -1,0 +1,10 @@
+{
+  "policyVersion": "agent-policy/1.0",
+  "scenarios": [
+    { "id": "SEC-001", "category": "benign", "expected": "allowed" },
+    { "id": "SEC-002", "category": "prompt_injection", "expected": "blocked" },
+    { "id": "SEC-003", "category": "tool_abuse", "expected": "blocked" },
+    { "id": "SEC-004", "category": "data_exfiltration", "expected": "blocked" },
+    { "id": "SEC-005", "category": "denial_of_wallet", "expected": "blocked" }
+  ]
+}

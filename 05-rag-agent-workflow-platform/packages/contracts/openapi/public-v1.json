@@ -537,12 +537,299 @@
           "retrieval evaluation"
         ]
       }
+    },
+    "/api/v1/agents/tools": {
+      "get": {
+        "operationId": "AgentsController_tools",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToolDefinitionResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs": {
+      "post": {
+        "operationId": "AgentsController_create",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRunDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      },
+      "get": {
+        "operationId": "AgentsController_list",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentRunSummaryResource"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}": {
+      "get": {
+        "operationId": "AgentsController_get",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/trace": {
+      "get": {
+        "operationId": "AgentsController_trace",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTraceResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/events": {
+      "get": {
+        "operationId": "AgentsController_events",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "last-event-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/agents/runs/{runId}/cancel": {
+      "post": {
+        "operationId": "AgentsController_cancel",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "agents"
+        ]
+      }
+    },
+    "/api/v1/security/evaluations": {
+      "post": {
+        "operationId": "SecurityController_evaluate",
+        "parameters": [
+          {
+            "name": "x-correlation-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityEvaluationResource"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "security"
+        ]
+      }
     }
   },
   "info": {
     "title": "RAG & Agent Workflow Platform API",
-    "description": "Sprint 2 public document, semantic-search, citation and retrieval-evaluation contract.",
-    "version": "0.2.0",
+    "description": "Public document, retrieval evaluation and governed Agent Workflow Trace Viewer contract.",
+    "version": "1.0.0",
     "contact": {}
   },
   "tags": [],
@@ -1191,6 +1478,399 @@
         },
         "required": [
           "relevant"
+        ]
+      },
+      "ToolDefinitionResource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "inputSchema": {
+            "type": "object"
+          },
+          "timeoutMs": {
+            "type": "number"
+          },
+          "maxResultBytes": {
+            "type": "number"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "permission",
+          "inputSchema",
+          "timeoutMs",
+          "maxResultBytes",
+          "readOnly"
+        ]
+      },
+      "AgentBudgetDto": {
+        "type": "object",
+        "properties": {
+          "maxSteps": {
+            "type": "object",
+            "default": 8,
+            "minimum": 4,
+            "maximum": 16
+          },
+          "maxToolCalls": {
+            "type": "object",
+            "default": 3,
+            "minimum": 1,
+            "maximum": 6
+          },
+          "overallTimeoutMs": {
+            "type": "object",
+            "default": 8000,
+            "minimum": 500,
+            "maximum": 20000
+          },
+          "perToolTimeoutMs": {
+            "type": "object",
+            "default": 3000,
+            "minimum": 250,
+            "maximum": 8000
+          }
+        },
+        "required": [
+          "maxSteps",
+          "maxToolCalls",
+          "overallTimeoutMs",
+          "perToolTimeoutMs"
+        ]
+      },
+      "CreateAgentRunDto": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "example": "How should retrieved instructions be treated?"
+          },
+          "workflowId": {
+            "type": "object",
+            "default": "bounded-research-v1"
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedToolNames": {
+            "default": [
+              "semantic_search"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget": {
+            "$ref": "#/components/schemas/AgentBudgetDto"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "example": "demo-run-2026-08-05-001"
+          }
+        },
+        "required": [
+          "goal",
+          "workflowId",
+          "allowedToolNames",
+          "idempotencyKey"
+        ]
+      },
+      "AgentRunResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ]
+          },
+          "outcome": {
+            "type": "object",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "object",
+            "nullable": true
+          },
+          "allowedToolNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documentVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "budget": {
+            "type": "object"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "runId",
+          "threadId",
+          "workflowId",
+          "status",
+          "outcome",
+          "goal",
+          "answer",
+          "allowedToolNames",
+          "documentVersionIds",
+          "budget",
+          "usage",
+          "citations",
+          "correlationId",
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "errorCode"
+        ]
+      },
+      "AgentRunSummaryResource": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting",
+              "completed",
+              "failed",
+              "cancelled",
+              "blocked"
+            ]
+          },
+          "outcome": {
+            "type": "object",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string"
+          },
+          "citationCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "runId",
+          "workflowId",
+          "status",
+          "outcome",
+          "goal",
+          "citationCount",
+          "createdAt",
+          "completedAt"
+        ]
+      },
+      "AgentTraceEventResource": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "sequenceNumber": {
+            "type": "number"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "nodeId": {
+            "type": "object",
+            "nullable": true
+          },
+          "payload": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "runId",
+          "sequenceNumber",
+          "eventType",
+          "nodeId",
+          "payload",
+          "timestamp"
+        ]
+      },
+      "AgentTraceResource": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/AgentRunResource"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "toolCalls": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentTraceEventResource"
+            }
+          },
+          "privateReasoningExposed": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "run",
+          "nodes",
+          "edges",
+          "steps",
+          "toolCalls",
+          "events",
+          "privateReasoningExposed"
+        ]
+      },
+      "SecurityEvaluationResource": {
+        "type": "object",
+        "properties": {
+          "evaluationId": {
+            "type": "string"
+          },
+          "policyVersion": {
+            "type": "string"
+          },
+          "scenarioCount": {
+            "type": "number"
+          },
+          "passedCount": {
+            "type": "number"
+          },
+          "blockedCount": {
+            "type": "number"
+          },
+          "failedCount": {
+            "type": "number"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluationId",
+          "policyVersion",
+          "scenarioCount",
+          "passedCount",
+          "blockedCount",
+          "failedCount",
+          "passed",
+          "scenarios",
+          "createdAt"
         ]
       }
     }

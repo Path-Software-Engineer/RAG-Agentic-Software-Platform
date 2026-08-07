@@ -5,9 +5,10 @@ import { DocumentsModule } from './documents/documents.module';
 import { HealthController } from './health.controller';
 import { EvaluationModule } from './evaluations/evaluation.module';
 import { SearchModule } from './search/search.module';
+import { AgentsModule } from './agents/agents.module';
 
 @Module({
-  imports: [CommonModule, DocumentsModule, SearchModule, EvaluationModule],
+  imports: [CommonModule, DocumentsModule, SearchModule, EvaluationModule, AgentsModule],
   controllers: [HealthController],
 })
 export class AppModule implements NestModule {

@@ -131,6 +131,113 @@ export interface InternalEvaluationRunSummary {
   created_at: string;
 }
 
+export interface InternalAgentRun {
+  run_id: string;
+  thread_id: string;
+  workflow_id: string;
+  status: 'queued' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled' | 'blocked';
+  outcome: 'answered' | 'insufficient_evidence' | 'policy_blocked' | 'budget_exhausted' | 'cancelled' | 'failed' | null;
+  goal: string;
+  answer: string | null;
+  allowed_tool_names: string[];
+  document_version_ids: string[];
+  budget: {
+    max_steps: number;
+    max_tool_calls: number;
+    overall_timeout_ms: number;
+    per_tool_timeout_ms: number;
+  };
+  usage: { steps: number; tool_calls: number; elapsed_ms: number };
+  citations: Array<{
+    citation_id: string;
+    document_id: string;
+    document_version_id: string;
+    chunk_id: string;
+    rank: number;
+    score: number;
+    snippet: string;
+  }>;
+  idempotency_key: string;
+  correlation_id: string;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_code: string | null;
+}
+
+export interface InternalAgentRunSummary {
+  run_id: string;
+  workflow_id: string;
+  status: InternalAgentRun['status'];
+  outcome: InternalAgentRun['outcome'];
+  goal: string;
+  citation_count: number;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface InternalAgentTraceEvent {
+  event_id: string;
+  run_id: string;
+  sequence_number: number;
+  event_type: string;
+  node_id: string | null;
+  payload: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface InternalAgentTrace {
+  run: InternalAgentRun;
+  nodes: Array<{ node_id: string; label: string; kind: string }>;
+  edges: Array<Record<string, unknown>>;
+  steps: Array<{
+    step_id: string;
+    node_id: string;
+    sequence_number: number;
+    status: string;
+    started_at: string;
+    completed_at: string | null;
+    duration_ms: number | null;
+    error_code: string | null;
+  }>;
+  tool_calls: Array<{
+    tool_call_id: string;
+    step_id: string;
+    tool_name: string;
+    status: string;
+    sanitized_arguments: Record<string, unknown>;
+    sanitized_result: Record<string, unknown> | null;
+    started_at: string;
+    completed_at: string | null;
+    duration_ms: number | null;
+    error_code: string | null;
+  }>;
+  events: InternalAgentTraceEvent[];
+  private_reasoning_exposed: false;
+}
+
+export interface InternalToolDefinition {
+  name: string;
+  description: string;
+  permission: string;
+  input_schema: Record<string, unknown>;
+  timeout_ms: number;
+  max_result_bytes: number;
+  read_only: true;
+}
+
+export interface InternalSecurityEvaluation {
+  evaluation_id: string;
+  policy_version: string;
+  scenario_count: number;
+  passed_count: number;
+  blocked_count: number;
+  failed_count: number;
+  passed: boolean;
+  scenarios: Array<Record<string, unknown>>;
+  created_at: string;
+}
+
 @Injectable()
 export class RagClient {
   private readonly baseUrl = process.env.RAG_SERVICE_URL ?? 'http://localhost:58100';
@@ -213,6 +320,75 @@ export class RagClient {
     );
   }
 
+  agentTools(correlationId: string): Promise<InternalToolDefinition[]> {
+    return this.request('/internal/v1/agents/tools', 'GET', undefined, correlationId);
+  }
+
+  createAgentRun(payload: {
+    goal: string;
+    workflow_id: string;
+    document_version_ids: string[];
+    allowed_tool_names: string[];
+    budget: {
+      max_steps: number;
+      max_tool_calls: number;
+      overall_timeout_ms: number;
+      per_tool_timeout_ms: number;
+    };
+    idempotency_key: string;
+    correlation_id: string;
+  }): Promise<InternalAgentRun> {
+    return this.request('/internal/v1/agents/runs', 'POST', payload, payload.correlation_id);
+  }
+
+  agentRuns(correlationId: string): Promise<InternalAgentRunSummary[]> {
+    return this.request('/internal/v1/agents/runs', 'GET', undefined, correlationId);
+  }
+
+  agentRun(runId: string, correlationId: string): Promise<InternalAgentRun> {
+    return this.request(
+      `/internal/v1/agents/runs/${encodeURIComponent(runId)}`,
+      'GET',
+      undefined,
+      correlationId,
+    );
+  }
+
+  agentTrace(runId: string, correlationId: string): Promise<InternalAgentTrace> {
+    return this.request(
+      `/internal/v1/agents/runs/${encodeURIComponent(runId)}/trace`,
+      'GET',
+      undefined,
+      correlationId,
+    );
+  }
+
+  agentEvents(
+    runId: string,
+    afterSequence: number,
+    correlationId: string,
+  ): Promise<InternalAgentTraceEvent[]> {
+    return this.request(
+      `/internal/v1/agents/runs/${encodeURIComponent(runId)}/events?after_sequence=${afterSequence}`,
+      'GET',
+      undefined,
+      correlationId,
+    );
+  }
+
+  cancelAgentRun(runId: string, correlationId: string): Promise<InternalAgentRun> {
+    return this.request(
+      `/internal/v1/agents/runs/${encodeURIComponent(runId)}/cancel`,
+      'POST',
+      {},
+      correlationId,
+    );
+  }
+
+  securityEvaluation(correlationId: string): Promise<InternalSecurityEvaluation> {
+    return this.request('/internal/v1/security/evaluations', 'POST', {}, correlationId);
+  }
+
   private async request<T>(
     path: string,
     method: 'GET' | 'POST' | 'PATCH',
@@ -238,9 +414,16 @@ export class RagClient {
         }
         if (response.status === 422) {
           throw new ApplicationError(
-            'EVALUATION_REQUEST_INVALID',
-            'The evaluation request is incomplete or inconsistent.',
+            'REQUEST_INVALID',
+            'The request is incomplete or inconsistent with the current evidence.',
             422,
+          );
+        }
+        if (response.status === 409) {
+          throw new ApplicationError(
+            'AGENT_RUN_CONFLICT',
+            'The requested run transition is not valid in its current state.',
+            409,
           );
         }
         throw new ApplicationError(

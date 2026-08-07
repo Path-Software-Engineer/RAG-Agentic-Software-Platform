@@ -7,6 +7,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Settings:
     database_url: str
+    redis_url: str
     storage_root: str
     chunk_size: int
     chunk_overlap: int
@@ -24,6 +25,7 @@ class Settings:
                 "DATABASE_URL",
                 "postgresql://rag_platform:local_only_change_me@localhost:55432/rag_platform",
             ),
+            redis_url=os.getenv("REDIS_URL", "redis://localhost:56379/0"),
             storage_root=os.getenv("STORAGE_ROOT", "storage/documents"),
             chunk_size=int(os.getenv("CHUNK_SIZE", "520")),
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "80")),
