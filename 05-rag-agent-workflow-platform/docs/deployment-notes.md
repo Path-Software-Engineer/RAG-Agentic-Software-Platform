@@ -19,7 +19,7 @@ CloudFront
 
 The AWS profile deliberately removes an always-on Redis service. PostgreSQL remains authoritative for ordered trace replay, and FastAPI selects the explicit null publisher when `REDIS_URL` is empty. This is a deployment-profile decision, not removal of the Redis integration from the complete architecture.
 
-The Lambda uses 1 GiB, reserved concurrency 1, no provisioned concurrency, a 60-second timeout and the included 512 MiB ephemeral filesystem. Document bodies, chunks and evidence remain durable in PostgreSQL; local file writes are disposable ingestion artifacts under `/tmp`.
+The Lambda uses 1 GiB, no provisioned concurrency, a 60-second timeout and the included 512 MiB ephemeral filesystem. The deploy script inspects regional unreserved concurrency and requests a one-execution reservation only when AWS can preserve its unreserved minimum. Restricted new accounts omit the per-function reservation and remain bounded by their smaller regional quota. Document bodies, chunks and evidence remain durable in PostgreSQL; local file writes are disposable ingestion artifacts under `/tmp`.
 
 The Neon URL remains a standard-tier SSM `SecureString`. CloudFormation supplies only its parameter name; the Lambda role has a resource-scoped `ssm:GetParameter` permission and the runtime requests decryption during cold start. This avoids both plaintext infrastructure parameters and unsupported secure dynamic references in Lambda environment properties.
 

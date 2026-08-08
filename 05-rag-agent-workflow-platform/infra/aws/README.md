@@ -22,7 +22,7 @@ The CloudFront Lambda origin uses OAC and `AWS_IAM`. Every browser POST/PATCH bo
 
 ## Cost boundary
 
-The stack creates one Lambda function with 1 GiB, reserved concurrency 1 and no provisioned concurrency; one private S3 bucket; one CloudFront distribution; one three-day CloudWatch log group; and one least-privilege execution role. The deploy script creates one private immutable ECR repository and retains only two release images.
+The stack creates one Lambda function with 1 GiB and no provisioned concurrency; one private S3 bucket; one CloudFront distribution; one three-day CloudWatch log group; and one least-privilege execution role. The deploy script reserves one execution only when regional quota permits AWS to retain its unreserved minimum. On restricted new accounts it omits that invalid reservation and reports the effective regional cap. The deploy script creates one private immutable ECR repository and retains only two release images.
 
 It does not create RDS, Aurora, ElastiCache, VPC resources, NAT Gateway, load balancers, EC2, App Runner or provisioned concurrency. Neon is external. AWS Budgets only alert and never impose a hard cap. Lambda is billed by request and duration, while S3, CloudFront, ECR, logs and transfer can still generate small charges.
 
@@ -83,6 +83,8 @@ Pause and resume API compute:
 .\infra\aws\set-api-state.ps1 -State Paused -Profile "paths"
 .\infra\aws\set-api-state.ps1 -State Running -Profile "paths"
 ```
+
+`Paused` always applies reserved concurrency zero. `Running` restores a one-execution reservation when quota permits it; otherwise it removes the pause and uses the account's regional concurrency cap.
 
 Explicit cleanup:
 

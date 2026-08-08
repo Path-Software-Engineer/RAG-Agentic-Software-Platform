@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2 — AWS concurrency quota compatibility
+
+- made the one-execution Lambda reservation conditional on the regional account quota;
+- preserved deployment on restricted new accounts without requesting an invalid reservation;
+- made pause/resume quota-aware and retained concurrency zero as the explicit pause state;
+- added automatic failed-resource evidence when CloudFormation deployment fails.
+
 ## 1.0.1 — AWS deployment fix
 
 - replaced the unsupported CloudFormation `ssm-secure` Lambda environment reference;
