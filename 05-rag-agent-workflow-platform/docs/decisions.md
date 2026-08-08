@@ -125,3 +125,9 @@
 **Status:** Accepted.
 
 **Decision:** CloudFormation passes only the namespaced SSM parameter name to Lambda. The execution role receives `ssm:GetParameter` only for that parameter, and the startup process requests the `SecureString` with decryption before migrations and application startup. The resolved URL exists only in the process environment and is never stored in the template, image, repository or logs. This replaces the rejected `ssm-secure` Lambda environment reference.
+
+## ADR-022 — Make reserved concurrency conditional on regional quota
+
+**Status:** Accepted.
+
+**Decision:** The deployment reads `UnreservedConcurrentExecutions` before creating the stack. It reserves one execution only when more than 100 remain, matching AWS's documented unreserved safety boundary. Restricted new accounts omit the per-function reservation rather than failing CloudFormation and remain bounded by their lower regional quota. Pausing still sets concurrency to zero; resuming restores the reservation only when quota permits it.
