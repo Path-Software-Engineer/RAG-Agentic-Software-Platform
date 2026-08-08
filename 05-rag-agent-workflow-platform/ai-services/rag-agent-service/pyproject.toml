@@ -1,6 +1,6 @@
 [project]
 name = "rag-agent-service"
-version = "1.0.1"
+version = "1.0.2"
 requires-python = ">=3.12,<3.14"
 
 [tool.pytest.ini_options]

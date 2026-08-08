@@ -13,6 +13,16 @@ Parameters:
     Default: 1048576
     MinValue: 1024
     MaxValue: 1048576
+  UseReservedConcurrency:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: Reserve one execution only when the regional account quota can preserve AWS's unreserved minimum.
+
+Conditions:
+  ApplyReservedConcurrency: !Equals [!Ref UseReservedConcurrency, "true"]
 
 Resources:
   WebBucket:
@@ -92,7 +102,7 @@ Resources:
       Role: !GetAtt PlatformExecutionRole.Arn
       MemorySize: 1024
       Timeout: 60
-      ReservedConcurrentExecutions: 1
+      ReservedConcurrentExecutions: !If [ApplyReservedConcurrency, 1, !Ref "AWS::NoValue"]
       EphemeralStorage:
         Size: 512
       Environment:

@@ -21,11 +21,30 @@ if ($State -eq "Paused") {
     return
 }
 
-aws lambda put-function-concurrency `
+$unreservedConcurrency = aws lambda get-account-settings `
+    --region $Region `
+    --profile $Profile `
+    --query "AccountLimit.UnreservedConcurrentExecutions" `
+    --output text `
+    --no-cli-pager
+if ($LASTEXITCODE -ne 0) { throw "AWS Lambda account concurrency could not be inspected." }
+
+if ([int]$unreservedConcurrency -gt 100) {
+    aws lambda put-function-concurrency `
+        --function-name $FunctionName `
+        --reserved-concurrent-executions 1 `
+        --region $Region `
+        --profile $Profile `
+        --no-cli-pager | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "AWS Lambda could not be resumed." }
+    Write-Host "$FunctionName is running with reserved concurrency 1."
+    return
+}
+
+aws lambda delete-function-concurrency `
     --function-name $FunctionName `
-    --reserved-concurrent-executions 1 `
     --region $Region `
     --profile $Profile `
     --no-cli-pager | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "AWS Lambda could not be resumed." }
-Write-Host "$FunctionName is running with reserved concurrency 1."
+if ($LASTEXITCODE -ne 0) { throw "AWS Lambda could not remove its paused concurrency setting." }
+Write-Host "$FunctionName is running under the regional concurrency quota ($unreservedConcurrency); no invalid reservation was requested."

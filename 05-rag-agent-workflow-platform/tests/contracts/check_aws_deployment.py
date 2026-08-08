@@ -22,6 +22,7 @@ def assert_contains(text: str, tokens: list[str], label: str) -> None:
 def main() -> None:
     template = require("infra/aws/template.yaml")
     deploy = require("infra/aws/deploy.ps1")
+    api_state = require("infra/aws/set-api-state.ps1")
     dockerfile = require("infra/aws/platform-lambda.Dockerfile")
     launcher = require("infra/aws/start-platform.sh")
     runtime_secret = require("infra/aws/load_runtime_secret.py")
@@ -36,7 +37,9 @@ def main() -> None:
         template,
         [
             "AWS::Lambda::Function",
-            "ReservedConcurrentExecutions: 1",
+            "UseReservedConcurrency:",
+            "ApplyReservedConcurrency:",
+            'ReservedConcurrentExecutions: !If [ApplyReservedConcurrency, 1, !Ref "AWS::NoValue"]',
             "MemorySize: 1024",
             "Timeout: 60",
             "AWS::Lambda::Url",
@@ -90,8 +93,24 @@ def main() -> None:
             '"run", "build", "--workspace", "@rag-platform/web"',
             "seed-agent-demo.ps1",
             "SmokeOnly",
+            '"lambda", "get-account-settings"',
+            "AccountLimit.UnreservedConcurrentExecutions",
+            "UseReservedConcurrency=$useReservedConcurrency",
+            "CloudFormation failed. Fetching failed Project 05 resource events.",
         ],
         "deployment script",
+    )
+    assert_contains(
+        api_state,
+        [
+            'ValidateSet("Running", "Paused")',
+            "--reserved-concurrent-executions 0",
+            "get-account-settings",
+            "AccountLimit.UnreservedConcurrentExecutions",
+            "--reserved-concurrent-executions 1",
+            "delete-function-concurrency",
+        ],
+        "quota-aware Lambda state script",
     )
     assert_contains(
         dockerfile,

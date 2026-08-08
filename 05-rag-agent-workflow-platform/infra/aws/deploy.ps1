@@ -192,6 +192,21 @@ function Assert-Preflight {
 
 Write-Host "[1/8] Verifying AWS identity, budget, secret, template and local tools"
 $identity = Assert-Preflight
+$unreservedConcurrency = [int](Invoke-Native -Command "aws" -Arguments @(
+    "lambda", "get-account-settings",
+    "--region", $Region,
+    "--profile", $Profile,
+    "--query", "AccountLimit.UnreservedConcurrentExecutions",
+    "--output", "text",
+    "--no-cli-pager"
+))
+$useReservedConcurrency = if ($unreservedConcurrency -gt 100) { "true" } else { "false" }
+if ($useReservedConcurrency -eq "true") {
+    Write-Host "Lambda quota supports a one-execution reservation while preserving 100 unreserved executions."
+}
+else {
+    Write-Host "Lambda exposes only $unreservedConcurrency unreserved executions; the stack will not request an invalid function reservation."
+}
 if ($PreflightOnly) {
     Write-Host "OK - AWS deployment preflight passed for account $($identity.Account)."
     return
@@ -308,13 +323,33 @@ else {
 }
 
 Write-Host "[4/8] Deploying the cost-bounded CloudFormation stack"
-Invoke-Native -Command "aws" -Arguments @(
-    "cloudformation", "deploy", "--template-file", $Template,
-    "--stack-name", $StackName, "--region", $Region, "--profile", $Profile,
-    "--capabilities", "CAPABILITY_NAMED_IAM", "--no-fail-on-empty-changeset",
-    "--parameter-overrides", "PlatformImageUri=$imageUri", "DatabaseUrlParameterName=$DatabaseUrlParameterName",
-    "--no-cli-pager"
-) -StreamOutput | Out-Null
+try {
+    Invoke-Native -Command "aws" -Arguments @(
+        "cloudformation", "deploy", "--template-file", $Template,
+        "--stack-name", $StackName, "--region", $Region, "--profile", $Profile,
+        "--capabilities", "CAPABILITY_NAMED_IAM", "--no-fail-on-empty-changeset",
+        "--parameter-overrides", "PlatformImageUri=$imageUri",
+        "DatabaseUrlParameterName=$DatabaseUrlParameterName",
+        "UseReservedConcurrency=$useReservedConcurrency",
+        "--no-cli-pager"
+    ) -StreamOutput | Out-Null
+}
+catch {
+    Write-Host "CloudFormation failed. Fetching failed Project 05 resource events."
+    try {
+        Invoke-Native -Command "aws" -Arguments @(
+            "cloudformation", "describe-stack-events",
+            "--stack-name", $StackName,
+            "--region", $Region,
+            "--profile", $Profile,
+            "--query", "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,LogicalResourceId,ResourceType,ResourceStatus,ResourceStatusReason]",
+            "--output", "table",
+            "--no-cli-pager"
+        ) -StreamOutput | Out-Null
+    }
+    catch { Write-Host "CloudFormation events are not available for this failed operation." }
+    throw
+}
 
 $applicationUrl = Get-StackOutput -Key "ApplicationUrl"
 $webBucket = Get-StackOutput -Key "WebBucketName"
