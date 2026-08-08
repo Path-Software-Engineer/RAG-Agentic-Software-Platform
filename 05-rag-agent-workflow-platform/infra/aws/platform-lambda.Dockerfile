@@ -45,6 +45,7 @@ RUN python -m pip install --upgrade pip \
 
 COPY ai-services/rag-agent-service/app /app/rag/app
 COPY database/migrations /app/migrations
+COPY infra/aws/load_runtime_secret.py /app/load_runtime_secret.py
 COPY infra/aws/migrate.py /app/migrate.py
 COPY infra/aws/start-platform.sh /app/start-platform.sh
 

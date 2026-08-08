@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 — AWS deployment fix
+
+- replaced the unsupported CloudFormation `ssm-secure` Lambda environment reference;
+- added least-privilege runtime access to the Project 05 SSM parameter;
+- added validated, decrypted startup loading without logging or persisting the Neon URL;
+- preserved the existing immutable ECR, CloudFront, S3 and Lambda topology.
+
 ## 1.0.0 — Unreleased
 
 - added the bounded Agent Workflow Trace Viewer;
