@@ -1,6 +1,15 @@
 #!/bin/sh
 set -eu
 
+if [ -z "${DATABASE_URL:-}" ]; then
+  if [ -z "${DATABASE_URL_PARAMETER_NAME:-}" ]; then
+    echo "DATABASE_URL_PARAMETER_NAME is required." >&2
+    exit 1
+  fi
+  DATABASE_URL="$(python /app/load_runtime_secret.py)"
+  export DATABASE_URL
+fi
+
 python /app/migrate.py
 
 cd /app/rag

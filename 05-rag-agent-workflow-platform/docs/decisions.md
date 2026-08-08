@@ -119,3 +119,9 @@
 **Status:** Accepted for the public demo.
 
 **Decision:** Compile SvelteKit into a private S3 origin behind CloudFront and package NestJS plus the private FastAPI engine in one Lambda container. NestJS remains the only public application boundary and reaches FastAPI through localhost. Neon PostgreSQL remains durable. Do not create RDS, ElastiCache, App Runner, VPC, NAT Gateway, load balancers or provisioned concurrency. Redis remains part of the complete Docker architecture but is replaced by the explicit null publisher in this low-traffic profile because PostgreSQL owns replayable trace truth.
+
+## ADR-021 — Resolve the Neon credential inside the Lambda runtime
+
+**Status:** Accepted.
+
+**Decision:** CloudFormation passes only the namespaced SSM parameter name to Lambda. The execution role receives `ssm:GetParameter` only for that parameter, and the startup process requests the `SecureString` with decryption before migrations and application startup. The resolved URL exists only in the process environment and is never stored in the template, image, repository or logs. This replaces the rejected `ssm-secure` Lambda environment reference.

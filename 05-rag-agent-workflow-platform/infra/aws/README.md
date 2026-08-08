@@ -16,6 +16,8 @@ Browser
 
 The one Lambda image contains two processes but does not collapse their contracts: the browser reaches only NestJS, and NestJS reaches FastAPI through `127.0.0.1`. PostgreSQL remains durable. Redis Streams stay in the complete Docker profile; the AWS demo replays ordered events from PostgreSQL and uses the explicit null publisher to avoid an always-on ElastiCache charge.
 
+CloudFormation passes only `/sf/05/rag-agent-workflow/database-url` to the runtime. The Lambda role can call `ssm:GetParameter` only for that namespaced parameter. At cold start, the container decrypts and validates the pooled Neon URL before migrations, exports it only to the two application processes and never writes or logs it.
+
 The CloudFront Lambda origin uses OAC and `AWS_IAM`. Every browser POST/PATCH body, including multipart uploads, is SHA-256 hashed in the `x-amz-content-sha256` header as required by AWS. The direct Function URL is not public.
 
 ## Cost boundary

@@ -26,7 +26,7 @@ try {
 
     Write-Host "[2/9] Python static checks and unit tests"
     $env:PYTHONPATH = (Resolve-Path "ai-services\rag-agent-service").Path
-    & $Python -m ruff check ai-services/rag-agent-service/app ai-services/rag-agent-service/tests tests
+    & $Python -m ruff check ai-services/rag-agent-service/app ai-services/rag-agent-service/tests infra/aws/load_runtime_secret.py tests
     if ($LASTEXITCODE -ne 0) { throw "Ruff check failed." }
     & $Python -m mypy ai-services/rag-agent-service/app
     if ($LASTEXITCODE -ne 0) { throw "Mypy check failed." }
