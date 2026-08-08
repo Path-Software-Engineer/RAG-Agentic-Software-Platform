@@ -37,6 +37,7 @@
 |-- infra/aws/
 |   |-- template.yaml              # CloudFront, S3 and protected Lambda
 |   |-- platform-lambda.Dockerfile # NestJS plus private FastAPI runtime
+|   |-- load_runtime_secret.py     # Scoped SSM SecureString resolution at startup
 |   |-- deploy.ps1                 # Preflight, immutable publish and smoke
 |   |-- configure-secrets.ps1      # Neon URL to SSM SecureString
 |   |-- set-api-state.ps1          # Reserved concurrency 0 or 1

@@ -21,6 +21,8 @@ The AWS profile deliberately removes an always-on Redis service. PostgreSQL rema
 
 The Lambda uses 1 GiB, reserved concurrency 1, no provisioned concurrency, a 60-second timeout and the included 512 MiB ephemeral filesystem. Document bodies, chunks and evidence remain durable in PostgreSQL; local file writes are disposable ingestion artifacts under `/tmp`.
 
+The Neon URL remains a standard-tier SSM `SecureString`. CloudFormation supplies only its parameter name; the Lambda role has a resource-scoped `ssm:GetParameter` permission and the runtime requests decryption during cold start. This avoids both plaintext infrastructure parameters and unsupported secure dynamic references in Lambda environment properties.
+
 CloudFront uses private origins. Browser request bodies are hashed with SHA-256 before POST/PATCH calls because Lambda Function URL OAC does not accept unsigned payloads. The frontend, API and Swagger share one HTTPS origin.
 
 The stack does not create RDS, Aurora, ElastiCache, EC2, App Runner, ECS, VPC, NAT Gateway, load balancers or GPUs. ECR retains only two immutable images and logs expire after three days. External Neon data is never deleted by AWS cleanup scripts.
